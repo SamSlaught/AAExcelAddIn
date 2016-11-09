@@ -57,6 +57,7 @@
             // btnNavigator
             // 
             this.btnNavigator.ControlSize = Microsoft.Office.Core.RibbonControlSize.RibbonControlSizeLarge;
+            this.btnNavigator.Enabled = false;
             this.btnNavigator.Label = "Navigator";
             this.btnNavigator.Name = "btnNavigator";
             this.btnNavigator.OfficeImageId = "FindDialog";
