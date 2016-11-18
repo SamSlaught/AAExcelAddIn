@@ -25,7 +25,9 @@ namespace AAExcelAddIn
             //Variables
             Excel.Application app;
             Excel.Workbook thisWorkbook;
-            string dataSoruceName = "", dataSrouceType = "", dataSoruceDesc = "", pageFields, rowFields, columnFields, dataFields, lstObjColumns;
+            string dataSoruceName = "", dataSrouceType = "", dataSoruceDesc = "", pageFields, rowFields, columnFields, dataFields, lstObjColumns, connType, connCommandText, connFilePath, connCommandType, connLastRefreshed;
+            Excel.XlCmdType cmdType = Microsoft.Office.Interop.Excel.XlCmdType.xlCmdDefault;
+            bool connPivotCache;
 
             //Creating the activeworkbook object
             app = (Excel.Application)Marshal.GetActiveObject("Excel.Application");
@@ -61,6 +63,13 @@ namespace AAExcelAddIn
                                 dataSoruceName = pvtCache.WorkbookConnection.Name;
                                 dataSrouceType = "Workbook Connection";
                                 dataSoruceDesc = pvtCache.WorkbookConnection.Description;
+                                break;
+
+                            //Unhandled data source
+                            default:
+                                dataSoruceName = "";
+                                dataSrouceType = "Unknown";
+                                dataSoruceDesc = "";
                                 break;
                         }
 
@@ -98,7 +107,7 @@ namespace AAExcelAddIn
 
                         //Creating a new row in the data grid for each pivot
                         DataGridViewRow row = new DataGridViewRow();
-                        row.CreateCells(dgrPivotTables, pvt.Name, ws.Name, dataSoruceName, dataSrouceType, dataSoruceDesc, pageFields, rowFields, columnFields, dataFields);
+                        row.CreateCells(dgrPivotTables, pvt.Name, ws.Name, dataSoruceName, dataSrouceType, dataSoruceDesc, pvt.RefreshDate, pageFields, rowFields, columnFields, dataFields);
                         dgrPivotTables.Rows.Add(row);
                     }
 
@@ -112,9 +121,7 @@ namespace AAExcelAddIn
 
                             //Excel Table/Range
                             case Excel.XlListObjectSourceType.xlSrcRange:
-                                dataSoruceName = "";
                                 dataSrouceType = "No External Source";
-                                dataSoruceDesc = "";
                                 break;
 
                             //Workbook Connection
@@ -122,6 +129,13 @@ namespace AAExcelAddIn
                                 dataSoruceName = lst.QueryTable.WorkbookConnection.Name;
                                 dataSrouceType = "Workbook Connection";
                                 dataSoruceDesc = lst.QueryTable.WorkbookConnection.Description;
+                                break;
+
+                            //Unhandled data soruce
+                            default:
+                                dataSoruceName = "";
+                                dataSrouceType = "Unknown";
+                                dataSoruceDesc = "";
                                 break;
                         }
 
@@ -138,11 +152,196 @@ namespace AAExcelAddIn
                         dgrListObjects.Rows.Add(row);
                     }
                 }
-
-                //Unselecting the first row in the data grids
-                dgrPivotTables.ClearSelection();
-                dgrListObjects.ClearSelection();
             }
+
+            //Loading each workbook connection into the data sources tab data grid
+            foreach (Excel.WorkbookConnection conn in thisWorkbook.Connections)
+            {
+
+                //Grabbing the variables
+                switch(conn.Type)
+                {
+                    
+                    //Data Feed
+                    case Excel.XlConnectionType.xlConnectionTypeDATAFEED:
+                        connType = "Data Feed";
+
+                        try
+                        {
+                            connLastRefreshed = conn.DataFeedConnection.RefreshDate.ToString();
+                        }
+                        catch
+                        {
+                            connLastRefreshed = "";
+                        }
+                        
+                        connCommandText = conn.DataFeedConnection.CommandText;
+                        connFilePath = conn.DataFeedConnection.SourceConnectionFile;
+                        cmdType = conn.DataFeedConnection.CommandType;
+                        break;
+
+                    //Power Pivot Model
+                    case Excel.XlConnectionType.xlConnectionTypeMODEL:
+                        connType = "Power Pivot Model";
+                        connLastRefreshed = "";
+                        connCommandText = conn.ModelConnection.CommandText;
+                        connFilePath = "";
+                        cmdType = conn.ModelConnection.CommandType;
+                        break;
+
+                    //No Source
+                    case Excel.XlConnectionType.xlConnectionTypeNOSOURCE:
+                        connType = "No Source";
+                        connLastRefreshed = "";
+                        connCommandText = "";
+                        connFilePath = "";
+                        break;
+
+                    //ODBC
+                    case Excel.XlConnectionType.xlConnectionTypeODBC:
+                        connType = "ODBC";
+
+                        try
+                        {
+                            connLastRefreshed = conn.ODBCConnection.RefreshDate.ToString();
+                        }
+                        catch
+                        {
+                            connLastRefreshed = "";
+                        }
+
+                        connCommandText = conn.ODBCConnection.CommandText;
+                        connFilePath = conn.ODBCConnection.SourceDataFile;
+                        cmdType = conn.ODBCConnection.CommandType;
+                        break;
+
+                    //OLEDB
+                    case Excel.XlConnectionType.xlConnectionTypeOLEDB:
+                        connType = "OLEDB";
+
+                        try
+                        {
+                            connLastRefreshed = conn.OLEDBConnection.RefreshDate.ToString();
+                        }
+                        catch
+                        {
+                            connLastRefreshed = "";
+                        }
+
+                        connCommandText = conn.OLEDBConnection.CommandText;
+                        connFilePath = conn.OLEDBConnection.SourceDataFile;
+                        cmdType = conn.OLEDBConnection.CommandType;
+                        break;
+
+                    //Text
+                    case Excel.XlConnectionType.xlConnectionTypeTEXT:
+                        connType = "Text";
+                        connLastRefreshed = "";
+                        connCommandText = "";
+                        connFilePath = conn.TextConnection.Connection.Substring(conn.TextConnection.Connection.IndexOf(';') + 1);
+                        break;
+
+                    //Web
+                    case Excel.XlConnectionType.xlConnectionTypeWEB:
+                        connType = "Web";
+                        connLastRefreshed = "";
+                        connCommandText = "";
+                        connFilePath = "";
+                        break;
+
+                    //Worksheet
+                    case Excel.XlConnectionType.xlConnectionTypeWORKSHEET:
+                        connType = "Worksheet";
+                        connLastRefreshed = "";
+                        connCommandText = conn.WorksheetDataConnection.CommandText;
+                        connFilePath = "";
+                        cmdType = conn.OLEDBConnection.CommandType;
+                        break;
+
+                    //XML Map
+                    case Excel.XlConnectionType.xlConnectionTypeXMLMAP:
+                        connType = "XML Map";
+                        connLastRefreshed = "";
+                        connCommandText = "";
+                        connFilePath = "";
+                        break;
+
+                    //Unknown
+                    default:
+                        connType = "Unknown";
+                        connLastRefreshed = "";
+                        connCommandText = "";
+                        connFilePath = "";
+                        break;
+                }
+
+                //Determining the command type of the connection is the connection type is known
+                if (connType != "Unknown" && connType != "No Source" && connType != "Text" && connType != "Web" && connType != "XML Map")
+                {
+
+                    switch (cmdType)
+                    {
+                        case Excel.XlCmdType.xlCmdCube:
+                            connCommandType = "Cube Name for OLAP Data Source";
+                            break;
+                        case Excel.XlCmdType.xlCmdDAX:
+                            connCommandType = "Data Analysis Expressions Formula";
+                            break;
+                        case Excel.XlCmdType.xlCmdDefault:
+                            connCommandType = "Default";
+                            break;
+                        case Excel.XlCmdType.xlCmdExcel:
+                            connCommandType = "Excel Formula";
+                            break;
+                        case Excel.XlCmdType.xlCmdList:
+                            connCommandType = "List";
+                            break;
+                        case Excel.XlCmdType.xlCmdSql:
+                            connCommandType = "SQL Statement";
+                            break;
+                        case Excel.XlCmdType.xlCmdTable:
+                            connCommandType = "OLE DB Data Source Table";
+                            break;
+                        case Excel.XlCmdType.xlCmdTableCollection:
+                            connCommandType = "Table Collection";
+                            break;
+                        default:
+                            connCommandType = "Unknown";
+                            break;
+                    }
+                }
+                else
+                {
+                    connCommandType = "Unknown";
+                }
+
+                //Determining if the workbook connection is linked to a pivot cache or not
+                connPivotCache = false;
+                foreach (Excel.PivotCache pvtCache in thisWorkbook.PivotCaches())
+                {
+
+                    try
+                    {
+                        if (pvtCache.WorkbookConnection.Name == conn.Name)
+                        {
+                            connPivotCache = true;
+                            break;
+                        }
+                    }
+                    catch
+                    { }
+                }
+
+                //Creating a new row in the data grid for each list object
+                DataGridViewRow row = new DataGridViewRow();
+                row.CreateCells(dgrDataSources, conn.Name, conn.Description, connType, connPivotCache, connLastRefreshed, connCommandText, connFilePath, connCommandType);
+                dgrDataSources.Rows.Add(row);
+            }
+
+            //Unselecting the first row in the data grids
+            dgrPivotTables.ClearSelection();
+            dgrListObjects.ClearSelection();
+            dgrDataSources.ClearSelection();
         }
 
         //User double clicks to go to selected pivot in the workbook
@@ -233,6 +432,102 @@ namespace AAExcelAddIn
                     rng.Select();
                 }
             }
+        }
+
+        private void dgrDataSources_SelectionChanged(object sender, EventArgs e)
+        {
+
+            //Variables
+            Excel.Application app;
+            Excel.Workbook thisWorkbook;
+            bool cacheFieldsFound = false;
+            string pvtFieldDataType;
+
+            //Creating the activeworkbook object
+            app = (Excel.Application)Marshal.GetActiveObject("Excel.Application");
+            app.Visible = true;
+            thisWorkbook = (Excel.Workbook)app.ActiveWorkbook;
+
+            //Resetting the fields sub grid if needed
+            if (dgrPvtChcFields.RowCount > 0)
+            {
+                dgrPvtChcFields.Rows.Clear();
+                dgrPvtChcFields.Refresh();
+            }
+
+            //Only check for piovt cache fields if the data source is linked to a pivot cache
+            if (Convert.ToBoolean(dgrDataSources.Rows[dgrDataSources.CurrentCell.RowIndex].Cells[3].Value) == true)
+            {
+
+                //Looping through each pivot cache to see if the selected connection is linked to any of them
+                foreach (Excel.PivotCache pvtCache in thisWorkbook.PivotCaches())
+                {
+
+                    //Handle scenario if a pivot cache is not linked to a workbook connection
+                    try
+                    {
+
+                        //If the workbook connection's name matches the name of the connection linked to the current pivot cache, grab its fields
+                        if (pvtCache.WorkbookConnection.Name == dgrDataSources.Rows[dgrDataSources.CurrentCell.RowIndex].Cells[0].Value.ToString())
+                        {
+
+                            //Loop through each pivot in the workbook until one is found that was created from the current pivot cache
+                            foreach (Excel.Worksheet ws in thisWorkbook.Worksheets)
+                            {
+                                foreach (Excel.PivotTable pvt in ws.PivotTables())
+                                {
+
+                                    //If the current pivot table pulls its data from the pivot cache, grab its fields and load them into the data grid view
+                                    if (pvt.PivotCache().Index == pvtCache.Index)
+                                    {
+                                        foreach (Excel.PivotField pvtField in pvt.PivotFields())
+                                        {
+
+                                            //Determining the current field's data type
+                                            switch (pvtField.DataType)
+                                            {
+
+                                                case Excel.XlPivotFieldDataType.xlDate:
+                                                    pvtFieldDataType = "Date/Time";
+                                                    break;
+
+                                                case Excel.XlPivotFieldDataType.xlNumber:
+                                                    pvtFieldDataType = "Number/Boolean";
+                                                    break;
+
+                                                case Excel.XlPivotFieldDataType.xlText:
+                                                    pvtFieldDataType = "Text";
+                                                    break;
+
+                                                default:
+                                                    pvtFieldDataType = "Unknown";
+                                                    break;
+                                            }
+
+                                            //Creating a new row in the data grid for each list object
+                                            DataGridViewRow row = new DataGridViewRow();
+                                            row.CreateCells(dgrPvtChcFields, pvtField.SourceName, pvtFieldDataType);
+                                            dgrPvtChcFields.Rows.Add(row);
+                                        }
+                                        cacheFieldsFound = true;
+                                        break;
+                                    }
+
+                                }
+
+                                //If the related pivot cache was found, exit the loop
+                                if (cacheFieldsFound == true)
+                                {
+                                    break;
+                                }
+                            }
+
+                        }
+                    }
+                    catch { }
+                }
+            }
+
         }
     }
 }
