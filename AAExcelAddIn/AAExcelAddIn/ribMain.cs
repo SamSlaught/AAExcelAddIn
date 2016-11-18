@@ -16,7 +16,7 @@ namespace AAExcelAddIn
         private void btnNavigator_Click(object sender, RibbonControlEventArgs e)
         {
             PvtLstObjNavigator navigator = new PvtLstObjNavigator();
-            navigator.Show();
+            navigator.ShowDialog();
         }
     }
 }
