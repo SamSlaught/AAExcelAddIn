@@ -28,32 +28,10 @@
         /// </summary>
         private void InitializeComponent()
         {
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle3 = new System.Windows.Forms.DataGridViewCellStyle();
             this.tcrNavigator = new System.Windows.Forms.TabControl();
             this.pgePivotTables = new System.Windows.Forms.TabPage();
             this.dgrPivotTables = new System.Windows.Forms.DataGridView();
-            this.pgeListObjects = new System.Windows.Forms.TabPage();
-            this.dgrListObjects = new System.Windows.Forms.DataGridView();
-            this.Table = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.LstObjWorksheet = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.LstObjDataSource = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.LstObjDataSourceType = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.LstObjDataSourceDesc = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.LstObjColumns = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.pgeDataSources = new System.Windows.Forms.TabPage();
-            this.dgrDataSources = new System.Windows.Forms.DataGridView();
-            this.label1 = new System.Windows.Forms.Label();
-            this.dgrPvtChcFields = new System.Windows.Forms.DataGridView();
-            this.pvtChcFieldSrcName = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.pvtChcFieldDataType = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.DataSource = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.dtaSrcDescription = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.dtaSrcType = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.dtaSrcPvtCache = new System.Windows.Forms.DataGridViewCheckBoxColumn();
-            this.dtaSrcLastUpdated = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.dtaSrcCommandText = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.dtaSrcConnectionFile = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.dtaSrcCommandType = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.PivotTable = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.PvtWorksheet = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.PvtDataSourceName = new System.Windows.Forms.DataGridViewTextBoxColumn();
@@ -64,14 +42,37 @@
             this.PvtColumnFields = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.PvtRowFields = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.PvtDataFields = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.pgeListObjects = new System.Windows.Forms.TabPage();
+            this.dgrListObjects = new System.Windows.Forms.DataGridView();
+            this.Table = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.LstObjWorksheet = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.LstObjDataSource = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.LstObjDataSourceType = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.LstObjDataSourceDesc = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.LstObjColumns = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.pgeDataSources = new System.Windows.Forms.TabPage();
+            this.dgrPvtChcFields = new System.Windows.Forms.DataGridView();
+            this.pvtChcFieldSrcName = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.pvtChcFieldDataType = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.label1 = new System.Windows.Forms.Label();
+            this.dgrDataSources = new System.Windows.Forms.DataGridView();
+            this.DataSource = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.dtaSrcDescription = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.dtaSrcType = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.dtaSrcPvtCache = new System.Windows.Forms.DataGridViewCheckBoxColumn();
+            this.dtaSrcPvtChcMemory = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.dtaSrcLastUpdated = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.dtaSrcCommandText = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.dtaSrcConnectionFile = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.dtaSrcCommandType = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.tcrNavigator.SuspendLayout();
             this.pgePivotTables.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dgrPivotTables)).BeginInit();
             this.pgeListObjects.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dgrListObjects)).BeginInit();
             this.pgeDataSources.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.dgrDataSources)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.dgrPvtChcFields)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.dgrDataSources)).BeginInit();
             this.SuspendLayout();
             // 
             // tcrNavigator
@@ -116,11 +117,80 @@
             this.PvtDataFields});
             this.dgrPivotTables.Location = new System.Drawing.Point(6, 6);
             this.dgrPivotTables.Name = "dgrPivotTables";
+            this.dgrPivotTables.ReadOnly = true;
             this.dgrPivotTables.RowHeadersVisible = false;
             this.dgrPivotTables.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
             this.dgrPivotTables.Size = new System.Drawing.Size(821, 416);
             this.dgrPivotTables.TabIndex = 1;
             this.dgrPivotTables.CellMouseDoubleClick += new System.Windows.Forms.DataGridViewCellMouseEventHandler(this.dgrPivotTables_CellMouseDoubleClick);
+            // 
+            // PivotTable
+            // 
+            this.PivotTable.HeaderText = "PivotTable";
+            this.PivotTable.Name = "PivotTable";
+            this.PivotTable.ReadOnly = true;
+            // 
+            // PvtWorksheet
+            // 
+            this.PvtWorksheet.HeaderText = "Worksheet";
+            this.PvtWorksheet.Name = "PvtWorksheet";
+            this.PvtWorksheet.ReadOnly = true;
+            // 
+            // PvtDataSourceName
+            // 
+            this.PvtDataSourceName.HeaderText = "Data Source Name";
+            this.PvtDataSourceName.Name = "PvtDataSourceName";
+            this.PvtDataSourceName.ReadOnly = true;
+            this.PvtDataSourceName.Width = 150;
+            // 
+            // PvtDataSourceType
+            // 
+            this.PvtDataSourceType.HeaderText = "Data Source Type";
+            this.PvtDataSourceType.Name = "PvtDataSourceType";
+            this.PvtDataSourceType.ReadOnly = true;
+            this.PvtDataSourceType.Width = 150;
+            // 
+            // PvtDataSourceDesc
+            // 
+            this.PvtDataSourceDesc.HeaderText = "Data Source Description";
+            this.PvtDataSourceDesc.Name = "PvtDataSourceDesc";
+            this.PvtDataSourceDesc.ReadOnly = true;
+            this.PvtDataSourceDesc.Width = 300;
+            // 
+            // PvtLastRefreshed
+            // 
+            this.PvtLastRefreshed.HeaderText = "Last Refreshed";
+            this.PvtLastRefreshed.Name = "PvtLastRefreshed";
+            this.PvtLastRefreshed.ReadOnly = true;
+            this.PvtLastRefreshed.Width = 150;
+            // 
+            // PvtPageFields
+            // 
+            this.PvtPageFields.HeaderText = "Filter Fields";
+            this.PvtPageFields.Name = "PvtPageFields";
+            this.PvtPageFields.ReadOnly = true;
+            this.PvtPageFields.Width = 150;
+            // 
+            // PvtColumnFields
+            // 
+            this.PvtColumnFields.HeaderText = "Column Fields";
+            this.PvtColumnFields.Name = "PvtColumnFields";
+            this.PvtColumnFields.ReadOnly = true;
+            this.PvtColumnFields.Width = 150;
+            // 
+            // PvtRowFields
+            // 
+            this.PvtRowFields.HeaderText = "Row Fields";
+            this.PvtRowFields.Name = "PvtRowFields";
+            this.PvtRowFields.ReadOnly = true;
+            this.PvtRowFields.Width = 150;
+            // 
+            // PvtDataFields
+            // 
+            this.PvtDataFields.HeaderText = "Value Fields";
+            this.PvtDataFields.Name = "PvtDataFields";
+            this.PvtDataFields.ReadOnly = true;
+            this.PvtDataFields.Width = 150;
             // 
             // pgeListObjects
             // 
@@ -209,41 +279,6 @@
             this.pgeDataSources.Text = "Data Sources";
             this.pgeDataSources.UseVisualStyleBackColor = true;
             // 
-            // dgrDataSources
-            // 
-            this.dgrDataSources.AllowUserToAddRows = false;
-            this.dgrDataSources.AllowUserToDeleteRows = false;
-            this.dgrDataSources.AllowUserToResizeRows = false;
-            this.dgrDataSources.CellBorderStyle = System.Windows.Forms.DataGridViewCellBorderStyle.None;
-            this.dgrDataSources.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            this.dgrDataSources.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
-            this.DataSource,
-            this.dtaSrcDescription,
-            this.dtaSrcType,
-            this.dtaSrcPvtCache,
-            this.dtaSrcLastUpdated,
-            this.dtaSrcCommandText,
-            this.dtaSrcConnectionFile,
-            this.dtaSrcCommandType});
-            this.dgrDataSources.Location = new System.Drawing.Point(3, 6);
-            this.dgrDataSources.Name = "dgrDataSources";
-            this.dgrDataSources.ReadOnly = true;
-            this.dgrDataSources.RowHeadersVisible = false;
-            this.dgrDataSources.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-            this.dgrDataSources.Size = new System.Drawing.Size(824, 198);
-            this.dgrDataSources.TabIndex = 0;
-            this.dgrDataSources.SelectionChanged += new System.EventHandler(this.dgrDataSources_SelectionChanged);
-            // 
-            // label1
-            // 
-            this.label1.AutoSize = true;
-            this.label1.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label1.Location = new System.Drawing.Point(6, 219);
-            this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(121, 15);
-            this.label1.TabIndex = 1;
-            this.label1.Text = "PivotCache Fields";
-            // 
             // dgrPvtChcFields
             // 
             this.dgrPvtChcFields.AllowUserToAddRows = false;
@@ -254,14 +289,14 @@
             this.dgrPvtChcFields.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
             this.pvtChcFieldSrcName,
             this.pvtChcFieldDataType});
-            dataGridViewCellStyle1.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
-            dataGridViewCellStyle1.BackColor = System.Drawing.SystemColors.Window;
-            dataGridViewCellStyle1.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            dataGridViewCellStyle1.ForeColor = System.Drawing.SystemColors.ControlText;
-            dataGridViewCellStyle1.SelectionBackColor = System.Drawing.SystemColors.Window;
-            dataGridViewCellStyle1.SelectionForeColor = System.Drawing.SystemColors.ControlText;
-            dataGridViewCellStyle1.WrapMode = System.Windows.Forms.DataGridViewTriState.False;
-            this.dgrPvtChcFields.DefaultCellStyle = dataGridViewCellStyle1;
+            dataGridViewCellStyle3.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle3.BackColor = System.Drawing.SystemColors.Window;
+            dataGridViewCellStyle3.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            dataGridViewCellStyle3.ForeColor = System.Drawing.SystemColors.ControlText;
+            dataGridViewCellStyle3.SelectionBackColor = System.Drawing.SystemColors.Window;
+            dataGridViewCellStyle3.SelectionForeColor = System.Drawing.SystemColors.ControlText;
+            dataGridViewCellStyle3.WrapMode = System.Windows.Forms.DataGridViewTriState.False;
+            this.dgrPvtChcFields.DefaultCellStyle = dataGridViewCellStyle3;
             this.dgrPvtChcFields.Location = new System.Drawing.Point(7, 238);
             this.dgrPvtChcFields.MultiSelect = false;
             this.dgrPvtChcFields.Name = "dgrPvtChcFields";
@@ -282,6 +317,42 @@
             this.pvtChcFieldDataType.HeaderText = "Data Type";
             this.pvtChcFieldDataType.Name = "pvtChcFieldDataType";
             this.pvtChcFieldDataType.ReadOnly = true;
+            // 
+            // label1
+            // 
+            this.label1.AutoSize = true;
+            this.label1.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label1.Location = new System.Drawing.Point(6, 219);
+            this.label1.Name = "label1";
+            this.label1.Size = new System.Drawing.Size(121, 15);
+            this.label1.TabIndex = 1;
+            this.label1.Text = "PivotCache Fields";
+            // 
+            // dgrDataSources
+            // 
+            this.dgrDataSources.AllowUserToAddRows = false;
+            this.dgrDataSources.AllowUserToDeleteRows = false;
+            this.dgrDataSources.AllowUserToResizeRows = false;
+            this.dgrDataSources.CellBorderStyle = System.Windows.Forms.DataGridViewCellBorderStyle.None;
+            this.dgrDataSources.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            this.dgrDataSources.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
+            this.DataSource,
+            this.dtaSrcDescription,
+            this.dtaSrcType,
+            this.dtaSrcPvtCache,
+            this.dtaSrcPvtChcMemory,
+            this.dtaSrcLastUpdated,
+            this.dtaSrcCommandText,
+            this.dtaSrcConnectionFile,
+            this.dtaSrcCommandType});
+            this.dgrDataSources.Location = new System.Drawing.Point(3, 6);
+            this.dgrDataSources.Name = "dgrDataSources";
+            this.dgrDataSources.ReadOnly = true;
+            this.dgrDataSources.RowHeadersVisible = false;
+            this.dgrDataSources.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
+            this.dgrDataSources.Size = new System.Drawing.Size(824, 198);
+            this.dgrDataSources.TabIndex = 0;
+            this.dgrDataSources.SelectionChanged += new System.EventHandler(this.dgrDataSources_SelectionChanged);
             // 
             // DataSource
             // 
@@ -307,6 +378,13 @@
             this.dtaSrcPvtCache.HeaderText = "PivotCache";
             this.dtaSrcPvtCache.Name = "dtaSrcPvtCache";
             this.dtaSrcPvtCache.ReadOnly = true;
+            // 
+            // dtaSrcPvtChcMemory
+            // 
+            this.dtaSrcPvtChcMemory.HeaderText = "Cache Size (MB)";
+            this.dtaSrcPvtChcMemory.Name = "dtaSrcPvtChcMemory";
+            this.dtaSrcPvtChcMemory.ReadOnly = true;
+            this.dtaSrcPvtChcMemory.Width = 125;
             // 
             // dtaSrcLastUpdated
             // 
@@ -335,73 +413,6 @@
             this.dtaSrcCommandType.ReadOnly = true;
             this.dtaSrcCommandType.Width = 150;
             // 
-            // PivotTable
-            // 
-            this.PivotTable.HeaderText = "PivotTable";
-            this.PivotTable.Name = "PivotTable";
-            // 
-            // PvtWorksheet
-            // 
-            this.PvtWorksheet.HeaderText = "Worksheet";
-            this.PvtWorksheet.Name = "PvtWorksheet";
-            this.PvtWorksheet.ReadOnly = true;
-            // 
-            // PvtDataSourceName
-            // 
-            this.PvtDataSourceName.HeaderText = "Data Source Name";
-            this.PvtDataSourceName.Name = "PvtDataSourceName";
-            this.PvtDataSourceName.ReadOnly = true;
-            this.PvtDataSourceName.Width = 150;
-            // 
-            // PvtDataSourceType
-            // 
-            this.PvtDataSourceType.HeaderText = "Data Source Type";
-            this.PvtDataSourceType.Name = "PvtDataSourceType";
-            this.PvtDataSourceType.ReadOnly = true;
-            this.PvtDataSourceType.Width = 150;
-            // 
-            // PvtDataSourceDesc
-            // 
-            this.PvtDataSourceDesc.HeaderText = "Data Source Description";
-            this.PvtDataSourceDesc.Name = "PvtDataSourceDesc";
-            this.PvtDataSourceDesc.ReadOnly = true;
-            this.PvtDataSourceDesc.Width = 300;
-            // 
-            // PvtLastRefreshed
-            // 
-            this.PvtLastRefreshed.HeaderText = "Last Refreshed";
-            this.PvtLastRefreshed.Name = "PvtLastRefreshed";
-            this.PvtLastRefreshed.ReadOnly = true;
-            this.PvtLastRefreshed.Width = 150;
-            // 
-            // PvtPageFields
-            // 
-            this.PvtPageFields.HeaderText = "Filter Fields";
-            this.PvtPageFields.Name = "PvtPageFields";
-            this.PvtPageFields.ReadOnly = true;
-            this.PvtPageFields.Width = 150;
-            // 
-            // PvtColumnFields
-            // 
-            this.PvtColumnFields.HeaderText = "Column Fields";
-            this.PvtColumnFields.Name = "PvtColumnFields";
-            this.PvtColumnFields.ReadOnly = true;
-            this.PvtColumnFields.Width = 150;
-            // 
-            // PvtRowFields
-            // 
-            this.PvtRowFields.HeaderText = "Row Fields";
-            this.PvtRowFields.Name = "PvtRowFields";
-            this.PvtRowFields.ReadOnly = true;
-            this.PvtRowFields.Width = 150;
-            // 
-            // PvtDataFields
-            // 
-            this.PvtDataFields.HeaderText = "Value Fields";
-            this.PvtDataFields.Name = "PvtDataFields";
-            this.PvtDataFields.ReadOnly = true;
-            this.PvtDataFields.Width = 150;
-            // 
             // PvtLstObjNavigator
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -421,8 +432,8 @@
             ((System.ComponentModel.ISupportInitialize)(this.dgrListObjects)).EndInit();
             this.pgeDataSources.ResumeLayout(false);
             this.pgeDataSources.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.dgrDataSources)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.dgrPvtChcFields)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.dgrDataSources)).EndInit();
             this.ResumeLayout(false);
 
         }
@@ -446,14 +457,6 @@
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.DataGridViewTextBoxColumn pvtChcFieldSrcName;
         private System.Windows.Forms.DataGridViewTextBoxColumn pvtChcFieldDataType;
-        private System.Windows.Forms.DataGridViewTextBoxColumn DataSource;
-        private System.Windows.Forms.DataGridViewTextBoxColumn dtaSrcDescription;
-        private System.Windows.Forms.DataGridViewTextBoxColumn dtaSrcType;
-        private System.Windows.Forms.DataGridViewCheckBoxColumn dtaSrcPvtCache;
-        private System.Windows.Forms.DataGridViewTextBoxColumn dtaSrcLastUpdated;
-        private System.Windows.Forms.DataGridViewTextBoxColumn dtaSrcCommandText;
-        private System.Windows.Forms.DataGridViewTextBoxColumn dtaSrcConnectionFile;
-        private System.Windows.Forms.DataGridViewTextBoxColumn dtaSrcCommandType;
         private System.Windows.Forms.DataGridViewTextBoxColumn PivotTable;
         private System.Windows.Forms.DataGridViewTextBoxColumn PvtWorksheet;
         private System.Windows.Forms.DataGridViewTextBoxColumn PvtDataSourceName;
@@ -464,5 +467,14 @@
         private System.Windows.Forms.DataGridViewTextBoxColumn PvtColumnFields;
         private System.Windows.Forms.DataGridViewTextBoxColumn PvtRowFields;
         private System.Windows.Forms.DataGridViewTextBoxColumn PvtDataFields;
+        private System.Windows.Forms.DataGridViewTextBoxColumn DataSource;
+        private System.Windows.Forms.DataGridViewTextBoxColumn dtaSrcDescription;
+        private System.Windows.Forms.DataGridViewTextBoxColumn dtaSrcType;
+        private System.Windows.Forms.DataGridViewCheckBoxColumn dtaSrcPvtCache;
+        private System.Windows.Forms.DataGridViewTextBoxColumn dtaSrcPvtChcMemory;
+        private System.Windows.Forms.DataGridViewTextBoxColumn dtaSrcLastUpdated;
+        private System.Windows.Forms.DataGridViewTextBoxColumn dtaSrcCommandText;
+        private System.Windows.Forms.DataGridViewTextBoxColumn dtaSrcConnectionFile;
+        private System.Windows.Forms.DataGridViewTextBoxColumn dtaSrcCommandType;
     }
 }
