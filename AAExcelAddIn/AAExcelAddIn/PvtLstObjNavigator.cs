@@ -28,12 +28,13 @@ namespace AAExcelAddIn
             string dataSoruceName = "", dataSrouceType = "", dataSoruceDesc = "", pageFields, rowFields, columnFields, dataFields, lstObjColumns, connType, connCommandText, connFilePath, connCommandType, connLastRefreshed;
             Excel.XlCmdType cmdType = Microsoft.Office.Interop.Excel.XlCmdType.xlCmdDefault;
             bool connPivotCache;
+            Nullable<decimal> connPvtChcSize = null;
 
             //Creating the activeworkbook object
             app = (Excel.Application)Marshal.GetActiveObject("Excel.Application");
             app.Visible = true;
             thisWorkbook = (Excel.Workbook)app.ActiveWorkbook;
-            
+
             //Loading the data grids in the form
             foreach (Excel.Worksheet ws in thisWorkbook.Worksheets)
             {
@@ -317,6 +318,7 @@ namespace AAExcelAddIn
 
                 //Determining if the workbook connection is linked to a pivot cache or not
                 connPivotCache = false;
+                connPvtChcSize = null;
                 foreach (Excel.PivotCache pvtCache in thisWorkbook.PivotCaches())
                 {
 
@@ -325,6 +327,8 @@ namespace AAExcelAddIn
                         if (pvtCache.WorkbookConnection.Name == conn.Name)
                         {
                             connPivotCache = true;
+                            connPvtChcSize = (Convert.ToDecimal(pvtCache.MemoryUsed) / 1048576);
+                            connPvtChcSize = Decimal.Round(Convert.ToDecimal(connPvtChcSize), 2);
                             break;
                         }
                     }
@@ -334,9 +338,12 @@ namespace AAExcelAddIn
 
                 //Creating a new row in the data grid for each list object
                 DataGridViewRow row = new DataGridViewRow();
-                row.CreateCells(dgrDataSources, conn.Name, conn.Description, connType, connPivotCache, connLastRefreshed, connCommandText, connFilePath, connCommandType);
+                row.CreateCells(dgrDataSources, conn.Name, conn.Description, connType, connPivotCache, connPvtChcSize, connLastRefreshed, connCommandText, connFilePath, connCommandType);
                 dgrDataSources.Rows.Add(row);
             }
+
+            //Right aligning certain columns in the data source grid view
+            dgrDataSources.Columns["dtaSrcPvtChcMemory"].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
 
             //Unselecting the first row in the data grids
             dgrPivotTables.ClearSelection();
@@ -524,10 +531,9 @@ namespace AAExcelAddIn
 
                         }
                     }
-                    catch { }
+                    catch { }                        
                 }
             }
-
         }
     }
 }
