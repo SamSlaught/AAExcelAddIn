@@ -28,7 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle3 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle2 = new System.Windows.Forms.DataGridViewCellStyle();
             this.tcrNavigator = new System.Windows.Forms.TabControl();
             this.pgePivotTables = new System.Windows.Forms.TabPage();
             this.dgrPivotTables = new System.Windows.Forms.DataGridView();
@@ -62,6 +62,7 @@
             this.dtaSrcPvtCache = new System.Windows.Forms.DataGridViewCheckBoxColumn();
             this.dtaSrcPvtChcMemory = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.dtaSrcLastUpdated = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.dtaSrcReadOnly = new System.Windows.Forms.DataGridViewCheckBoxColumn();
             this.dtaSrcCommandText = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.dtaSrcConnectionFile = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.dtaSrcCommandType = new System.Windows.Forms.DataGridViewTextBoxColumn();
@@ -289,14 +290,14 @@
             this.dgrPvtChcFields.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
             this.pvtChcFieldSrcName,
             this.pvtChcFieldDataType});
-            dataGridViewCellStyle3.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
-            dataGridViewCellStyle3.BackColor = System.Drawing.SystemColors.Window;
-            dataGridViewCellStyle3.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            dataGridViewCellStyle3.ForeColor = System.Drawing.SystemColors.ControlText;
-            dataGridViewCellStyle3.SelectionBackColor = System.Drawing.SystemColors.Window;
-            dataGridViewCellStyle3.SelectionForeColor = System.Drawing.SystemColors.ControlText;
-            dataGridViewCellStyle3.WrapMode = System.Windows.Forms.DataGridViewTriState.False;
-            this.dgrPvtChcFields.DefaultCellStyle = dataGridViewCellStyle3;
+            dataGridViewCellStyle2.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle2.BackColor = System.Drawing.SystemColors.Window;
+            dataGridViewCellStyle2.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            dataGridViewCellStyle2.ForeColor = System.Drawing.SystemColors.ControlText;
+            dataGridViewCellStyle2.SelectionBackColor = System.Drawing.SystemColors.Window;
+            dataGridViewCellStyle2.SelectionForeColor = System.Drawing.SystemColors.ControlText;
+            dataGridViewCellStyle2.WrapMode = System.Windows.Forms.DataGridViewTriState.False;
+            this.dgrPvtChcFields.DefaultCellStyle = dataGridViewCellStyle2;
             this.dgrPvtChcFields.Location = new System.Drawing.Point(7, 238);
             this.dgrPvtChcFields.MultiSelect = false;
             this.dgrPvtChcFields.Name = "dgrPvtChcFields";
@@ -342,6 +343,7 @@
             this.dtaSrcPvtCache,
             this.dtaSrcPvtChcMemory,
             this.dtaSrcLastUpdated,
+            this.dtaSrcReadOnly,
             this.dtaSrcCommandText,
             this.dtaSrcConnectionFile,
             this.dtaSrcCommandType});
@@ -391,6 +393,14 @@
             this.dtaSrcLastUpdated.HeaderText = "Last Updated";
             this.dtaSrcLastUpdated.Name = "dtaSrcLastUpdated";
             this.dtaSrcLastUpdated.ReadOnly = true;
+            // 
+            // dtaSrcReadOnly
+            // 
+            this.dtaSrcReadOnly.HeaderText = "Read Only";
+            this.dtaSrcReadOnly.Name = "dtaSrcReadOnly";
+            this.dtaSrcReadOnly.ReadOnly = true;
+            this.dtaSrcReadOnly.Resizable = System.Windows.Forms.DataGridViewTriState.True;
+            this.dtaSrcReadOnly.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.Automatic;
             // 
             // dtaSrcCommandText
             // 
@@ -473,6 +483,7 @@
         private System.Windows.Forms.DataGridViewCheckBoxColumn dtaSrcPvtCache;
         private System.Windows.Forms.DataGridViewTextBoxColumn dtaSrcPvtChcMemory;
         private System.Windows.Forms.DataGridViewTextBoxColumn dtaSrcLastUpdated;
+        private System.Windows.Forms.DataGridViewCheckBoxColumn dtaSrcReadOnly;
         private System.Windows.Forms.DataGridViewTextBoxColumn dtaSrcCommandText;
         private System.Windows.Forms.DataGridViewTextBoxColumn dtaSrcConnectionFile;
         private System.Windows.Forms.DataGridViewTextBoxColumn dtaSrcCommandType;

@@ -27,7 +27,7 @@ namespace AAExcelAddIn
             Excel.Workbook thisWorkbook;
             string dataSoruceName = "", dataSrouceType = "", dataSoruceDesc = "", pageFields, rowFields, columnFields, dataFields, lstObjColumns, connType, connCommandText, connFilePath, connCommandType, connLastRefreshed;
             Excel.XlCmdType cmdType = Microsoft.Office.Interop.Excel.XlCmdType.xlCmdDefault;
-            bool connPivotCache;
+            bool connPivotCache, connReadOnly;
             Nullable<decimal> connPvtChcSize = null;
 
             //Creating the activeworkbook object
@@ -160,7 +160,7 @@ namespace AAExcelAddIn
             {
 
                 //Grabbing the variables
-                switch(conn.Type)
+                switch (conn.Type)
                 {
                     
                     //Data Feed
@@ -175,7 +175,8 @@ namespace AAExcelAddIn
                         {
                             connLastRefreshed = "";
                         }
-                        
+
+                        connReadOnly = (conn.DataFeedConnection.Connection.IndexOf("Mode=Read") != -1 || conn.OLEDBConnection.Connection.IndexOf("ReadOnly=True") != -1);
                         connCommandText = conn.DataFeedConnection.CommandText;
                         connFilePath = conn.DataFeedConnection.SourceConnectionFile;
                         cmdType = conn.DataFeedConnection.CommandType;
@@ -184,6 +185,7 @@ namespace AAExcelAddIn
                     //Power Pivot Model
                     case Excel.XlConnectionType.xlConnectionTypeMODEL:
                         connType = "Power Pivot Model";
+                        connReadOnly = false;
                         connLastRefreshed = "";
                         connCommandText = conn.ModelConnection.CommandText;
                         connFilePath = "";
@@ -193,6 +195,7 @@ namespace AAExcelAddIn
                     //No Source
                     case Excel.XlConnectionType.xlConnectionTypeNOSOURCE:
                         connType = "No Source";
+                        connReadOnly = false;
                         connLastRefreshed = "";
                         connCommandText = "";
                         connFilePath = "";
@@ -211,6 +214,7 @@ namespace AAExcelAddIn
                             connLastRefreshed = "";
                         }
 
+                        connReadOnly = (conn.ODBCConnection.Connection.IndexOf("Mode=Read") != -1 || conn.OLEDBConnection.Connection.IndexOf("ReadOnly=True") != -1);
                         connCommandText = conn.ODBCConnection.CommandText;
                         connFilePath = conn.ODBCConnection.SourceDataFile;
                         cmdType = conn.ODBCConnection.CommandType;
@@ -229,6 +233,7 @@ namespace AAExcelAddIn
                             connLastRefreshed = "";
                         }
 
+                        connReadOnly = (conn.OLEDBConnection.Connection.IndexOf("Mode=Read") != -1 || conn.OLEDBConnection.Connection.IndexOf("ReadOnly=True") != -1);
                         connCommandText = conn.OLEDBConnection.CommandText;
                         connFilePath = conn.OLEDBConnection.SourceDataFile;
                         cmdType = conn.OLEDBConnection.CommandType;
@@ -238,6 +243,7 @@ namespace AAExcelAddIn
                     case Excel.XlConnectionType.xlConnectionTypeTEXT:
                         connType = "Text";
                         connLastRefreshed = "";
+                        connReadOnly = false;
                         connCommandText = "";
                         connFilePath = conn.TextConnection.Connection.Substring(conn.TextConnection.Connection.IndexOf(';') + 1);
                         break;
@@ -246,6 +252,7 @@ namespace AAExcelAddIn
                     case Excel.XlConnectionType.xlConnectionTypeWEB:
                         connType = "Web";
                         connLastRefreshed = "";
+                        connReadOnly = false;
                         connCommandText = "";
                         connFilePath = "";
                         break;
@@ -254,6 +261,7 @@ namespace AAExcelAddIn
                     case Excel.XlConnectionType.xlConnectionTypeWORKSHEET:
                         connType = "Worksheet";
                         connLastRefreshed = "";
+                        connReadOnly = false;
                         connCommandText = conn.WorksheetDataConnection.CommandText;
                         connFilePath = "";
                         cmdType = conn.OLEDBConnection.CommandType;
@@ -263,6 +271,7 @@ namespace AAExcelAddIn
                     case Excel.XlConnectionType.xlConnectionTypeXMLMAP:
                         connType = "XML Map";
                         connLastRefreshed = "";
+                        connReadOnly = false;
                         connCommandText = "";
                         connFilePath = "";
                         break;
@@ -271,6 +280,7 @@ namespace AAExcelAddIn
                     default:
                         connType = "Unknown";
                         connLastRefreshed = "";
+                        connReadOnly = false;
                         connCommandText = "";
                         connFilePath = "";
                         break;
@@ -338,7 +348,7 @@ namespace AAExcelAddIn
 
                 //Creating a new row in the data grid for each list object
                 DataGridViewRow row = new DataGridViewRow();
-                row.CreateCells(dgrDataSources, conn.Name, conn.Description, connType, connPivotCache, connPvtChcSize, connLastRefreshed, connCommandText, connFilePath, connCommandType);
+                row.CreateCells(dgrDataSources, conn.Name, conn.Description, connType, connPivotCache, connPvtChcSize, connLastRefreshed, connReadOnly, connCommandText, connFilePath, connCommandType);
                 dgrDataSources.Rows.Add(row);
             }
 
