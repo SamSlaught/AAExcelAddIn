@@ -8,7 +8,10 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using Office = Microsoft.Office.Core;
 using Excel = Microsoft.Office.Interop.Excel;
+
+using System.Diagnostics;
 
 namespace AAExcelAddIn
 {
@@ -19,21 +22,69 @@ namespace AAExcelAddIn
             InitializeComponent();
         }
 
+        //Global variables
+        public Office.CustomXMLPart addInXmlPart;
+
         private void PvtLstObjNavigator_Load(object sender, EventArgs e)
         {
 
             //Variables
             Excel.Application app;
             Excel.Workbook thisWorkbook;
+            Office.DocumentProperty customXmlPartDocProp;
             string dataSoruceName = "", dataSrouceType = "", dataSoruceDesc = "", pageFields, rowFields, columnFields, dataFields, lstObjColumns, connType, connCommandText, connFilePath, connCommandType, connLastRefreshed;
+            const string xmlPartTitle = "<title>AA Excel Add-In (Navigator)</title>", docPropertyName = "NavCustomXmlPartID";
             Excel.XlCmdType cmdType = Microsoft.Office.Interop.Excel.XlCmdType.xlCmdDefault;
-            bool connPivotCache, connReadOnly;
+            bool connPivotCache, connReadOnly, correctXmlPart = false;
             Nullable<decimal> connPvtChcSize = null;
 
             //Creating the activeworkbook object
             app = (Excel.Application)Marshal.GetActiveObject("Excel.Application");
             app.Visible = true;
             thisWorkbook = (Excel.Workbook)app.ActiveWorkbook;
+
+            //Grabbing the custom Xml Part
+            //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+            //Making sure the document property that contains the xml part id exists in the current workbook
+            //If the property doesn't exist, create/re-create it
+            try
+            {
+                customXmlPartDocProp = thisWorkbook.CustomDocumentProperties(docPropertyName);
+                addInXmlPart = thisWorkbook.CustomXMLParts.SelectByID(customXmlPartDocProp.Value);
+                if (addInXmlPart != null)
+                {
+                    correctXmlPart = addInXmlPart.XML.Contains(xmlPartTitle);
+                }
+            }
+            catch
+            {
+                customXmlPartDocProp = thisWorkbook.CustomDocumentProperties.Add(Name: docPropertyName, LinkToContent: false, Type: Office.MsoDocProperties.msoPropertyTypeString, Value: "0");
+            }
+
+            //If the part was not properly obtained, take the necessary steps to fix the issue
+            if (customXmlPartDocProp.Value == "0" || addInXmlPart == null || correctXmlPart == false)
+            {
+
+                //Grabbing the id of the xml part
+                foreach (Office.CustomXMLPart xmlPart in thisWorkbook.CustomXMLParts)
+                {
+                    if (xmlPart.XML.Contains(xmlPartTitle))
+                    {
+                        addInXmlPart = xmlPart;
+                        customXmlPartDocProp.Value = addInXmlPart.Id;
+                        break;
+                    }
+                }
+
+                //If the id was not found in the loop, create the xml part
+                if (customXmlPartDocProp.Value == "0")
+                {
+                    addInXmlPart = thisWorkbook.CustomXMLParts.Add("<?xml version=\"1.0\" encoding=\"UTF - 8\"?>" + xmlPartTitle);
+                    customXmlPartDocProp.Value = addInXmlPart.Id;
+                }
+            }
+            //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
             //Loading the data grids in the form
             foreach (Excel.Worksheet ws in thisWorkbook.Worksheets)
