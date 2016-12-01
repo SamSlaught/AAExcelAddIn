@@ -12,6 +12,7 @@ using Office = Microsoft.Office.Core;
 using Excel = Microsoft.Office.Interop.Excel;
 
 using System.Diagnostics;
+using System.IO;
 
 namespace AAExcelAddIn
 {
@@ -24,6 +25,8 @@ namespace AAExcelAddIn
 
         //Global variables
         public Office.CustomXMLPart addInXmlPart;
+        public bool creatingNewGrouping, newRecordRow;
+        public string previousGrouping;
 
         private void PvtLstObjNavigator_Load(object sender, EventArgs e)
         {
@@ -80,11 +83,25 @@ namespace AAExcelAddIn
                 //If the id was not found in the loop, create the xml part
                 if (customXmlPartDocProp.Value == "0")
                 {
-                    addInXmlPart = thisWorkbook.CustomXMLParts.Add("<?xml version=\"1.0\" encoding=\"UTF - 8\"?>" + xmlPartTitle);
+                    addInXmlPart = thisWorkbook.CustomXMLParts.Add("<?xml version=\"1.0\" encoding=\"UTF - 8\"?><data>" + xmlPartTitle + "<Groupings></Groupings></data>");
                     customXmlPartDocProp.Value = addInXmlPart.Id;
                 }
             }
             //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+            StringReader sr = new StringReader(addInXmlPart.SelectSingleNode("data/Groupings").XML);
+            DataSet ds = new DataSet();
+            ds.ReadXml(sr);
+            if (ds.Tables.Count > 0)
+            {
+                dgrGroupings.DataSource = ds.Tables[0];
+                dgrGroupings.Columns[0].Name = "Grouping";
+                dgrGroupings.Columns[0].HeaderText = "Grouping";
+            }
+            else
+            {
+                dgrGroupings.Columns.Add("Grouping", "Grouping");
+            }
 
             //Loading the data grids in the form
             foreach (Excel.Worksheet ws in thisWorkbook.Worksheets)
@@ -159,7 +176,7 @@ namespace AAExcelAddIn
 
                         //Creating a new row in the data grid for each pivot
                         DataGridViewRow row = new DataGridViewRow();
-                        row.CreateCells(dgrPivotTables, pvt.Name, ws.Name, dataSoruceName, dataSrouceType, dataSoruceDesc, pvt.RefreshDate, pageFields, rowFields, columnFields, dataFields);
+                        row.CreateCells(dgrPivotTables, pvt.Name, ws.Name, "Go To", "", dataSoruceName, dataSrouceType, dataSoruceDesc, pvt.RefreshDate, pageFields, rowFields, columnFields, dataFields);
                         dgrPivotTables.Rows.Add(row);
                     }
 
@@ -415,46 +432,6 @@ namespace AAExcelAddIn
         //User double clicks to go to selected pivot in the workbook
         private void dgrPivotTables_CellMouseDoubleClick(object sender, DataGridViewCellMouseEventArgs e)
         {
-
-            //Variables
-            Excel.Application app;
-            Excel.Workbook thisWorkbook;
-
-            //Making sure the double clicked row isn't the header
-            if (e.RowIndex != -1)
-            {
-
-                //Creating the activeworkbook object
-                app = (Excel.Application)Marshal.GetActiveObject("Excel.Application");
-                app.Visible = true;
-                thisWorkbook = (Excel.Workbook)app.ActiveWorkbook;
-
-                //Determining where the pivottable is
-                Excel.Worksheet ws = thisWorkbook.Sheets[dgrPivotTables.Rows[e.RowIndex].Cells[1].Value];
-                Excel.PivotTable pvt = ws.PivotTables(dgrPivotTables.Rows[e.RowIndex].Cells[0].Value);
-                Excel.Range rng = ws.Range[pvt.TableRange2.Address.Substring(0, pvt.TableRange2.Address.IndexOf(':'))];
-
-                //Checking if the worksheet the pivot resides in is hidden
-                if (ws.Visible == Excel.XlSheetVisibility.xlSheetHidden)
-                {
-
-                    //Confirming with the user that they wish to unhide the sheet the pivot resides on
-                    DialogResult msgboxResult = MessageBox.Show("The worksheet this PivotTable resides in is currently hidden. Do you wish the worksheet?", this.Text, MessageBoxButtons.YesNo, MessageBoxIcon.Question);
-                    
-                    //Unhiding the worksheet if the user confirmed it
-                    if (msgboxResult == DialogResult.Yes)
-                    {
-                        ws.Visible = Excel.XlSheetVisibility.xlSheetVisible;
-                    }
-                }
-
-                //Moving the cell selector to the pivot
-                if (ws.Visible == Excel.XlSheetVisibility.xlSheetVisible)
-                {
-                    ws.Select();
-                    rng.Select();
-                }
-            }
         }
 
         //User double clicks to go to selected list object in the workbook
@@ -593,6 +570,93 @@ namespace AAExcelAddIn
                         }
                     }
                     catch { }                        
+                }
+            }
+        }
+
+        //Updating the xml part based on whether a new grouping is being created or an existing grouping is being updated
+        private void dgrGroupings_CellEndEdit(object sender, DataGridViewCellEventArgs e)
+        {
+
+            //Making sure the current record isnt the new record
+            if (!newRecordRow)
+            {
+
+                //Determing if the edit was made for a new row or existing
+                if (creatingNewGrouping)
+                {
+                    addInXmlPart.AddNode(addInXmlPart.SelectSingleNode("data/Groupings"), "Grouping", NodeValue: dgrGroupings[e.ColumnIndex, e.RowIndex].Value.ToString());
+                }
+                else
+                {
+                    addInXmlPart.SelectSingleNode("data/Groupings/Grouping[text()=\"" + previousGrouping + "\"]").Text = dgrGroupings[e.ColumnIndex, e.RowIndex].Value.ToString();
+                }
+            }
+        }
+
+        //If the user deletes the grouping from the grid, delete it in the xml part
+        private void dgrGroupings_UserDeletingRow(object sender, DataGridViewRowCancelEventArgs e)
+        {
+            newRecordRow = (dgrGroupings.NewRowIndex == e.Row.Index);
+            if (!newRecordRow)
+            {
+                addInXmlPart.SelectSingleNode("data/Groupings/Grouping[text()=\"" + e.Row.Cells[0].Value.ToString() + "\"]").Delete();
+            }
+        }
+
+        //Indicates whether if the user is creating a new grouping or not
+        private void dgrGroupings_CellBeginEdit(object sender, DataGridViewCellCancelEventArgs e)
+        {
+            creatingNewGrouping = dgrGroupings.Rows[e.RowIndex].IsNewRow;
+            if (!creatingNewGrouping)
+            {
+                previousGrouping = dgrGroupings[0, e.RowIndex].Value.ToString();
+            }
+        }
+
+        //User clicks the Go To button in the pivot data grid
+        private void dgrPivotTables_CellClick(object sender, DataGridViewCellEventArgs e)
+        {
+
+            if (e.ColumnIndex == 2)
+            {
+                
+            }
+
+        }
+
+        //Making sure a valid grouping is entered
+        private void dgrGroupings_CellValidating(object sender, DataGridViewCellValidatingEventArgs e)
+        {
+
+            //No need to validate if the new row is selected
+            newRecordRow = (dgrGroupings.NewRowIndex == e.RowIndex);
+            if (newRecordRow) { return; }
+
+            //Making sure a value was entered
+            if (e.FormattedValue.ToString().TrimStart().TrimEnd() == "")
+            {
+                MessageBox.Show("A grouping cannot be blank or only contain spaces.", this.Text, MessageBoxButtons.OK, MessageBoxIcon.Information);
+                e.Cancel = true;
+            }
+            else if (e.FormattedValue.ToString().Contains("\""))
+            {
+                MessageBox.Show("Double quotes are illegal characters.", this.Text, MessageBoxButtons.OK, MessageBoxIcon.Information);
+                e.Cancel = true;
+            }
+            else
+            {
+                foreach (DataGridViewRow rw in dgrGroupings.Rows)
+                {
+                    if (e.RowIndex != dgrGroupings.NewRowIndex && rw.Cells[0].Value != null)
+                    {
+                        if (e.RowIndex != rw.Index && e.FormattedValue.ToString() == rw.Cells[0].Value.ToString())
+                        {
+                            MessageBox.Show("This value already exists as a grouping. Please keep your grouping unique.", this.Text, MessageBoxButtons.OK, MessageBoxIcon.Information);
+                            e.Cancel = true;
+                            break;
+                        }
+                    }
                 }
             }
         }
