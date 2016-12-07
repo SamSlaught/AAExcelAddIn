@@ -131,7 +131,6 @@
             this.dgrPivotTables.TabIndex = 1;
             this.dgrPivotTables.CellClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgrPivotTables_CellClick);
             this.dgrPivotTables.CellEndEdit += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgrPivotTables_CellEndEdit);
-            this.dgrPivotTables.CellMouseDoubleClick += new System.Windows.Forms.DataGridViewCellMouseEventHandler(this.dgrPivotTables_CellMouseDoubleClick);
             // 
             // PivotTable
             // 

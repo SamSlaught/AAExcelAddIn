@@ -35,7 +35,7 @@ namespace AAExcelAddIn
             Excel.Application app;
             Excel.Workbook thisWorkbook;
             Office.DocumentProperty customXmlPartDocProp;
-            string dataSoruceName = "", dataSrouceType = "", dataSoruceDesc = "", pageFields, rowFields, columnFields, dataFields, lstObjColumns, connType, connCommandText, connFilePath, connCommandType, connLastRefreshed, pvtGrouping;
+            string dataSoruceName = "", dataSrouceType = "", dataSoruceDesc = "", pageFields, rowFields, columnFields, dataFields, lstObjColumns, connType, connCommandText, connFilePath, connCommandType, connLastRefreshed, pvtGrouping, modifiedObjectName;
             const string xmlPartTitle = "<title version=\"\">AA Excel Add-In (Navigator)</title>", docPropertyName = "NavCustomXmlPartID";
             Excel.XlCmdType cmdType = Microsoft.Office.Interop.Excel.XlCmdType.xlCmdDefault;
             bool connPivotCache, connReadOnly, correctXmlPart = false;
@@ -191,8 +191,9 @@ namespace AAExcelAddIn
                         //Checking if a grouping was assigned to the pivot or not
                         //...................................................................................
 
-                        if (addInXmlPart.SelectSingleNode("data/PivotGroupings/PivotGrouping[@pivotName=\"" + pvt.Name + "\"][@worksheetName='" + ws.Name + "'][@pivotType='Table']") != null) {
-                            pvtGrouping = addInXmlPart.SelectSingleNode("data/PivotGroupings/PivotGrouping[@pivotName=\"" + pvt.Name + "\"][@worksheetName='" + ws.Name + "'][@pivotType='Table']").Attributes[4].NodeValue.ToString();
+                        modifiedObjectName = pvt.Name.Replace("'", "&apos;");
+                        if (addInXmlPart.SelectSingleNode("data/PivotGroupings/PivotGrouping[@pivotName='" + modifiedObjectName + "'][@worksheetName='" + ws.Name + "'][@pivotType='Table']") != null) {
+                            pvtGrouping = addInXmlPart.SelectSingleNode("data/PivotGroupings/PivotGrouping[@pivotName='" + modifiedObjectName + "'][@worksheetName='" + ws.Name + "'][@pivotType='Table']").Attributes[4].NodeValue.ToString();
                         }
                         else
                         {
@@ -456,11 +457,6 @@ namespace AAExcelAddIn
             dgrDataSources.ClearSelection();
         }
 
-        //User double clicks to go to selected pivot in the workbook
-        private void dgrPivotTables_CellMouseDoubleClick(object sender, DataGridViewCellMouseEventArgs e)
-        {
-        }
-
         //User double clicks to go to selected list object in the workbook
         private void dgrListObjects_CellDoubleClick(object sender, DataGridViewCellEventArgs e)
         {
@@ -506,6 +502,7 @@ namespace AAExcelAddIn
             }
         }
 
+        //User selects a data source record that is a pivot cache to see its fields
         private void dgrDataSources_SelectionChanged(object sender, EventArgs e)
         {
 
@@ -584,7 +581,6 @@ namespace AAExcelAddIn
                                         cacheFieldsFound = true;
                                         break;
                                     }
-
                                 }
 
                                 //If the related pivot cache was found, exit the loop
@@ -593,7 +589,6 @@ namespace AAExcelAddIn
                                     break;
                                 }
                             }
-
                         }
                     }
                     catch { }                        
@@ -732,12 +727,14 @@ namespace AAExcelAddIn
                     rng.Select();
                 }
             }
-
         }
 
         //User changes data in the pivots grid view
         private void dgrPivotTables_CellEndEdit(object sender, DataGridViewCellEventArgs e)
         {
+
+            //Variables
+            string modifiedObjectName;
 
             //Run a different procedure based on which cell was changed
             switch (e.ColumnIndex)
@@ -746,25 +743,26 @@ namespace AAExcelAddIn
                 //Grouping dropdown
                 case 3:
 
-                    
+
                     //If the user selects the blank option in the dropdown and there already isnt a gropuing record for the selected pivot, do nothing
-                    if (dgrPivotTables[e.ColumnIndex, e.RowIndex].Value != null || addInXmlPart.SelectSingleNode("data/PivotGroupings/PivotGrouping[@pivotName=\"" + dgrPivotTables[0, e.RowIndex].Value.ToString() + "\"][@worksheetName='" + dgrPivotTables[1, e.RowIndex].Value.ToString() + "'][@pivotType='Table']") != null)
+                    modifiedObjectName = dgrPivotTables[0, e.RowIndex].Value.ToString().Replace("'", "&apos;");
+                    if (dgrPivotTables[e.ColumnIndex, e.RowIndex].Value != null || addInXmlPart.SelectSingleNode("data/PivotGroupings/PivotGrouping[@pivotName='" + modifiedObjectName + "'][@worksheetName='" + dgrPivotTables[1, e.RowIndex].Value.ToString() + "'][@pivotType='Table']") != null)
                     {
 
                         //If the pivot. worksheet, and type key exists, update the grouping of the key
                         //Otherwise, create a new record for the pivot grouping
-                        if (addInXmlPart.SelectSingleNode("data/PivotGroupings/PivotGrouping[@pivotName=\"" + dgrPivotTables[0, e.RowIndex].Value.ToString() + "\"][@worksheetName='" + dgrPivotTables[1, e.RowIndex].Value.ToString() + "'][@pivotType='Table']") != null)
+                        if (addInXmlPart.SelectSingleNode("data/PivotGroupings/PivotGrouping[@pivotName='" + modifiedObjectName + "'][@worksheetName='" + dgrPivotTables[1, e.RowIndex].Value.ToString() + "'][@pivotType='Table']") != null)
                         {
 
                             //If the user chooses the blank option, then just delete the record in the xml part
                             //Otherwise, update the record to the newly selected grouping
                             if (dgrPivotTables[e.ColumnIndex, e.RowIndex].Value == null)
                             {
-                                addInXmlPart.SelectSingleNode("data/PivotGroupings/PivotGrouping[@pivotName=\"" + dgrPivotTables[0, e.RowIndex].Value.ToString() + "\"][@worksheetName='" + dgrPivotTables[1, e.RowIndex].Value.ToString() + "'][@pivotType='Table']").Delete();
+                                addInXmlPart.SelectSingleNode("data/PivotGroupings/PivotGrouping[@pivotName='" + modifiedObjectName + "'][@worksheetName='" + dgrPivotTables[1, e.RowIndex].Value.ToString() + "'][@pivotType='Table']").Delete();
                             }
                             else
                             {
-                                addInXmlPart.SelectSingleNode("data/PivotGroupings/PivotGrouping[@pivotName=\"" + dgrPivotTables[0, e.RowIndex].Value.ToString() + "\"][@worksheetName='" + dgrPivotTables[1, e.RowIndex].Value.ToString() + "'][@pivotType='Table']").Attributes[4].NodeValue = dgrPivotTables[e.ColumnIndex, e.RowIndex].Value.ToString();
+                                addInXmlPart.SelectSingleNode("data/PivotGroupings/PivotGrouping[@pivotName='" + modifiedObjectName + "'][@worksheetName='" + dgrPivotTables[1, e.RowIndex].Value.ToString() + "'][@pivotType='Table']").Attributes[4].NodeValue = dgrPivotTables[e.ColumnIndex, e.RowIndex].Value.ToString();
                             }
                         }
                         else
@@ -777,7 +775,7 @@ namespace AAExcelAddIn
                             //+++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
                             //Pivot Name
-                            addInXmlPart.AddNode(addInXmlPart.SelectSingleNode("data/PivotGroupings/PivotGrouping[last()]"), "pivotName", "", NodeType: Office.MsoCustomXMLNodeType.msoCustomXMLNodeAttribute, NodeValue: dgrPivotTables[0, e.RowIndex].Value.ToString());
+                            addInXmlPart.AddNode(addInXmlPart.SelectSingleNode("data/PivotGroupings/PivotGrouping[last()]"), "pivotName", "", NodeType: Office.MsoCustomXMLNodeType.msoCustomXMLNodeAttribute, NodeValue: modifiedObjectName);
 
                             //Worksheet Name
                             addInXmlPart.AddNode(addInXmlPart.SelectSingleNode("data/PivotGroupings/PivotGrouping[last()]"), "worksheetName", "", NodeType: Office.MsoCustomXMLNodeType.msoCustomXMLNodeAttribute, NodeValue: dgrPivotTables[1, e.RowIndex].Value.ToString());
@@ -808,9 +806,9 @@ namespace AAExcelAddIn
                 MessageBox.Show("A grouping cannot be blank or only contain spaces.", this.Text, MessageBoxButtons.OK, MessageBoxIcon.Information);
                 e.Cancel = true;
             }
-            else if (e.FormattedValue.ToString().Contains("\""))
+            else if (e.FormattedValue.ToString().Contains("\"") || e.FormattedValue.ToString().Contains("'"))
             {
-                MessageBox.Show("Double quotes are illegal characters.", this.Text, MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show("Quotes are illegal characters.", this.Text, MessageBoxButtons.OK, MessageBoxIcon.Information);
                 e.Cancel = true;
             }
             else
