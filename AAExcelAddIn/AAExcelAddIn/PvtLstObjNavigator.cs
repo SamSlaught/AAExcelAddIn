@@ -26,7 +26,7 @@ namespace AAExcelAddIn
         //Global variables
         public Office.CustomXMLPart addInXmlPart;
         public bool creatingNewGrouping, newRecordRow;
-        public string previousGrouping;
+        public string previousGrouping, previousObjectName;
 
         private void PvtLstObjNavigator_Load(object sender, EventArgs e)
         {
@@ -760,11 +760,46 @@ namespace AAExcelAddIn
         {
 
             //Variables
-            string modifiedObjectName;
+            string modifiedPrevObjName, modifiedObjectName;
+            Excel.Application app;
+            Excel.Workbook thisWorkbook;
+            Excel.Worksheet ws;
+            Excel.PivotTable pvt;
 
             //Run a different procedure based on which cell was changed
             switch (e.ColumnIndex)
             {
+
+                //Pivot Name
+                case 0:
+
+                    //Creating the activeworkbook object
+                    app = (Excel.Application)Marshal.GetActiveObject("Excel.Application");
+                    app.Visible = true;
+                    thisWorkbook = (Excel.Workbook)app.ActiveWorkbook;
+
+                    //Renaming the pivot table
+                    ws = thisWorkbook.Worksheets[dgrPivotTables[1, e.RowIndex].Value.ToString()];
+                    pvt = ws.PivotTables(previousObjectName);
+                    pvt.Name = dgrPivotTables[0, e.RowIndex].Value.ToString();
+
+                    //Updating the custom xml part of the pivot table grouping if there is one
+                    modifiedPrevObjName = previousObjectName.ToString().Replace("'", "&apos;");
+                    modifiedObjectName = pvt.Name.ToString().Replace("'", "&apos;");
+                    if (addInXmlPart.SelectSingleNode("data/PivotGroupings/PivotGrouping[@pivotName = '" + modifiedPrevObjName + "'][@worksheetName='" + dgrPivotTables[1, e.RowIndex].Value.ToString() + "'][@pivotType='Table']") != null)
+                    {
+
+                        //Updating the grouping record that is tied to the update pivot
+                        addInXmlPart.SelectSingleNode("data/PivotGroupings/PivotGrouping[@pivotName = '" + modifiedPrevObjName + "'][@worksheetName='" + dgrPivotTables[1, e.RowIndex].Value.ToString() + "'][@pivotType='Table']").Attributes[1].NodeValue = modifiedObjectName;
+
+                        //Moving the attributes back to their original locations
+                        //I mean, really? Just updating the value of attribute moves it to the last attribute index of the element?! This hack will have to do I guess
+                        for (int i = 1; i <= 3; i++)
+                        {
+                            addInXmlPart.SelectSingleNode("data/PivotGroupings/PivotGrouping[@pivotName = '" + modifiedObjectName + "'][@worksheetName='" + dgrPivotTables[1, e.RowIndex].Value.ToString() + "'][@pivotType='Table']").Attributes[1].NodeValue = addInXmlPart.SelectSingleNode("data/PivotGroupings/PivotGrouping[@pivotName = '" + modifiedObjectName + "'][@worksheetName='" + dgrPivotTables[1, e.RowIndex].Value.ToString() + "'][@pivotType='Table']").Attributes[1].NodeValue;
+                        }
+                    }
+                    break;
 
                 //Grouping dropdown
                 case 3:
@@ -919,6 +954,77 @@ namespace AAExcelAddIn
                             //+++++++++++++++++++++++++++++++++++++++++++++++++++++++
                         }
                     }
+                    break;
+            }
+        }
+
+        //Making sure the user made a valid entry for the editted column
+        private void dgrPivotTables_CellValidating(object sender, DataGridViewCellValidatingEventArgs e)
+        {
+
+            //Variables
+            Excel.Application app;
+            Excel.Workbook thisWorkbook;
+            Excel.Worksheet ws;
+
+            //Determine which column was editted
+            switch (e.ColumnIndex)
+            {
+
+                //Pivot Name
+                case 0:
+
+                    //Making sure the entered pivot name isnt blank
+                    if (e.FormattedValue.ToString() == "")
+                    {
+                        MessageBox.Show("PivotTable names cannot be blank.", this.Text, MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        e.Cancel = true;
+                    }
+                    //Making sure the name of the pivot does not exceed 255 characters
+                    else if (e.FormattedValue.ToString().Length > 255)
+                    {
+                        MessageBox.Show("The max length of a PivotTable name is 255 characters.", this.Text, MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        e.Cancel = true;
+                    }
+                    
+                    //Making sure the new name for the pivot isnt already assigned to a different pivot in the worksheet
+                    if (!e.Cancel)
+                    {
+
+                        //Creating the activeworkbook object
+                        app = (Excel.Application)Marshal.GetActiveObject("Excel.Application");
+                        app.Visible = true;
+                        thisWorkbook = (Excel.Workbook)app.ActiveWorkbook;
+                        ws = thisWorkbook.Worksheets[dgrPivotTables[1, e.RowIndex].Value.ToString()];
+
+                        //Looping through each pivot in the worksheet and making sure the new name wasn't already assigned to one of the pivots
+                        foreach (Excel.PivotTable pvt in ws.PivotTables())
+                        {
+
+                            if (String.Equals(pvt.Name, e.FormattedValue.ToString(), StringComparison.OrdinalIgnoreCase) && !String.Equals(pvt.Name, dgrPivotTables[e.ColumnIndex, e.RowIndex].Value.ToString(), StringComparison.OrdinalIgnoreCase))
+                            {
+                                MessageBox.Show("The name you entered is already assinged to a different pivot in the " + ws.Name + " worksheet.", this.Text, MessageBoxButtons.OK, MessageBoxIcon.Information);
+                                e.Cancel = true;
+                                break;
+                            }
+                        }
+                    }
+
+                    break;
+            }
+        }
+
+        //If the user is changing a certain value in the pivot grid view, run a certain procedure based on which column is being editted
+        private void dgrPivotTables_CellBeginEdit(object sender, DataGridViewCellCancelEventArgs e)
+        {
+            
+            //Determine which column is being editted
+            switch (e.ColumnIndex)
+            {
+
+                //Pivot Name
+                case 0:
+                    previousObjectName = dgrPivotTables[e.ColumnIndex, e.RowIndex].Value.ToString();
                     break;
             }
         }
