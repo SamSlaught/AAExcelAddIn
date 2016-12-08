@@ -903,11 +903,43 @@ namespace AAExcelAddIn
         {
 
             //Variables
-            string modifiedObjectName;
+            string modifiedPrevObjName, modifiedObjectName;
+            Excel.Application app;
+            Excel.Workbook thisWorkbook;
+            Excel.Worksheet ws;
+            Excel.ListObject lst;
 
             //Run a different procedure based on which cell was changed
             switch (e.ColumnIndex)
             {
+
+                //List Object Name
+                case 0:
+
+                    //Creating the activeworkbook object
+                    app = (Excel.Application)Marshal.GetActiveObject("Excel.Application");
+                    app.Visible = true;
+                    thisWorkbook = (Excel.Workbook)app.ActiveWorkbook;
+
+                    //Updating the custom xml part of the list object grouping if there is one
+                    ws = thisWorkbook.Worksheets[dgrListObjects[1, e.RowIndex].Value.ToString()];
+                    lst = ws.ListObjects[dgrListObjects[e.ColumnIndex, e.RowIndex].Value.ToString()];
+                    modifiedPrevObjName = previousObjectName.ToString().Replace("'", "&apos;");
+                    modifiedObjectName = lst.Name.ToString().Replace("'", "&apos;");
+                    if (addInXmlPart.SelectSingleNode("data/ListObjectGroupings/ListObjectGrouping[@lstObjName = '" + modifiedPrevObjName + "'][@worksheetName='" + dgrListObjects[1, e.RowIndex].Value.ToString() + "']") != null)
+                    {
+
+                        //Updating the grouping record that is tied to the update list object
+                        addInXmlPart.SelectSingleNode("data/ListObjectGroupings/ListObjectGrouping[@lstObjName = '" + modifiedPrevObjName + "'][@worksheetName='" + dgrListObjects[1, e.RowIndex].Value.ToString() + "']").Attributes[1].NodeValue = modifiedObjectName;
+
+                        //Moving the attributes back to their original locations
+                        //I mean, really? Just updating the value of attribute moves it to the last attribute index of the element?! This hack will have to do I guess
+                        for (int i = 1; i <= 2; i++)
+                        {
+                            addInXmlPart.SelectSingleNode("data/ListObjectGroupings/ListObjectGrouping[@lstObjName = '" + modifiedObjectName + "'][@worksheetName='" + dgrListObjects[1, e.RowIndex].Value.ToString() + "']").Attributes[1].NodeValue = addInXmlPart.SelectSingleNode("data/ListObjectGroupings/ListObjectGrouping[@lstObjName = '" + modifiedObjectName + "'][@worksheetName='" + dgrListObjects[1, e.RowIndex].Value.ToString() + "']").Attributes[1].NodeValue;
+                        }
+                    }
+                    break;
 
                 //Grouping dropdown
                 case 3:
@@ -958,7 +990,7 @@ namespace AAExcelAddIn
             }
         }
 
-        //Making sure the user made a valid entry for the editted column
+        //Making sure the user made a valid entry for the editted column in the pivot data grid
         private void dgrPivotTables_CellValidating(object sender, DataGridViewCellValidatingEventArgs e)
         {
 
@@ -1003,13 +1035,68 @@ namespace AAExcelAddIn
 
                             if (String.Equals(pvt.Name, e.FormattedValue.ToString(), StringComparison.OrdinalIgnoreCase) && !String.Equals(pvt.Name, dgrPivotTables[e.ColumnIndex, e.RowIndex].Value.ToString(), StringComparison.OrdinalIgnoreCase))
                             {
-                                MessageBox.Show("The name you entered is already assinged to a different pivot in the " + ws.Name + " worksheet.", this.Text, MessageBoxButtons.OK, MessageBoxIcon.Information);
+                                MessageBox.Show("The name you entered is already assinged to a different PivotTable in the " + ws.Name + " worksheet.", this.Text, MessageBoxButtons.OK, MessageBoxIcon.Information);
                                 e.Cancel = true;
                                 break;
                             }
                         }
                     }
 
+                    break;
+            }
+        }
+
+        //If the user is changing a certain value in the list object grid view, run a certain procedure based on which column is being editted
+        private void dgrListObjects_CellBeginEdit(object sender, DataGridViewCellCancelEventArgs e)
+        {
+
+            //Determine which column is being editted
+            switch (e.ColumnIndex)
+            {
+
+                //Pivot Name
+                case 0:
+                    previousObjectName = dgrListObjects[e.ColumnIndex, e.RowIndex].Value.ToString();
+                    break;
+            }
+        }
+
+        //Making sure the user made a valid entry for the editted column in the list object data grid
+        private void dgrListObjects_CellValidating(object sender, DataGridViewCellValidatingEventArgs e)
+        {
+
+            //Variables
+            Excel.Application app;
+            Excel.Workbook thisWorkbook;
+            Excel.Worksheet ws;
+            Excel.ListObject lst;
+            
+
+            //Determine which column was editted
+            switch (e.ColumnIndex)
+            {
+
+                //List Object Name
+                case 0:
+
+                    //Creating the activeworkbook object
+                    app = (Excel.Application)Marshal.GetActiveObject("Excel.Application");
+                    app.Visible = true;
+                    thisWorkbook = (Excel.Workbook)app.ActiveWorkbook;
+                    ws = thisWorkbook.Worksheets[dgrListObjects[1, e.RowIndex].Value.ToString()];
+                    lst = ws.ListObjects[dgrListObjects[e.ColumnIndex, e.RowIndex].Value.ToString()];
+
+                    //Setting the name of the list object and it fails, notify the user
+                    try
+                    {
+                        lst.DisplayName = e.FormattedValue.ToString();
+                    }
+                    catch
+                    {
+
+                        MessageBox.Show("The name you entered was not except by Excel. It is possible that is may contain an invalid character or the name you wish to give to the table may already belong to another range currently in the workbook.", this.Text, MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        e.Cancel = true;
+                    }
                     break;
             }
         }
