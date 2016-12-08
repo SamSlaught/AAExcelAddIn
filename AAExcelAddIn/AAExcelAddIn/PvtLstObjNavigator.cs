@@ -35,8 +35,8 @@ namespace AAExcelAddIn
             Excel.Application app;
             Excel.Workbook thisWorkbook;
             Office.DocumentProperty customXmlPartDocProp;
-            string dataSoruceName = "", dataSrouceType = "", dataSoruceDesc = "", pageFields, rowFields, columnFields, dataFields, lstObjColumns, connType, connCommandText, connFilePath, connCommandType, connLastRefreshed, pvtGrouping, modifiedObjectName;
-            const string xmlPartTitle = "<title version=\"\">AA Excel Add-In (Navigator)</title>", docPropertyName = "NavCustomXmlPartID";
+            string dataSoruceName = "", dataSrouceType = "", dataSoruceDesc = "", pageFields, rowFields, columnFields, dataFields, lstObjColumns, connType, connCommandText, connFilePath, connCommandType, connLastRefreshed, objectGrouping, modifiedObjectName;
+            const string xmlPartTitle = "<title>AA Excel Add-In (Navigator)</title>", docPropertyName = "NavCustomXmlPartID";
             Excel.XlCmdType cmdType = Microsoft.Office.Interop.Excel.XlCmdType.xlCmdDefault;
             bool connPivotCache, connReadOnly, correctXmlPart = false;
             Nullable<decimal> connPvtChcSize = null;
@@ -85,7 +85,7 @@ namespace AAExcelAddIn
                 //If the id was not found in the loop, create the xml part
                 if (customXmlPartDocProp.Value == "0")
                 {
-                    addInXmlPart = thisWorkbook.CustomXMLParts.Add("<data>" + xmlPartTitle + "<Groupings></Groupings><PivotGroupings></PivotGroupings></data>");
+                    addInXmlPart = thisWorkbook.CustomXMLParts.Add("<data>" + xmlPartTitle + "<Groupings></Groupings><PivotGroupings></PivotGroupings><ListObjectGroupings></ListObjectGroupings></data>");
                     customXmlPartDocProp.Value = addInXmlPart.Id;
                 }
             }
@@ -109,10 +109,12 @@ namespace AAExcelAddIn
             }
 
             //Loading all the current groupings into the grouping dropdowns
-            ((DataGridViewComboBoxColumn)dgrPivotTables.Columns["PvtGrouping"]).Items.Add("");
+            ((DataGridViewComboBoxColumn)dgrPivotTables.Columns["pvtGrouping"]).Items.Add("");
+            ((DataGridViewComboBoxColumn)dgrListObjects.Columns["lstObjGrouping"]).Items.Add("");
             foreach (Office.CustomXMLNode node in addInXmlPart.SelectSingleNode("data/Groupings").ChildNodes)
             {
-                ((DataGridViewComboBoxColumn)dgrPivotTables.Columns["PvtGrouping"]).Items.Add(node.Text);
+                ((DataGridViewComboBoxColumn)dgrPivotTables.Columns["pvtGrouping"]).Items.Add(node.Text);
+                ((DataGridViewComboBoxColumn)dgrListObjects.Columns["lstObjGrouping"]).Items.Add(node.Text);
             }
 
             //>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
@@ -193,18 +195,18 @@ namespace AAExcelAddIn
 
                         modifiedObjectName = pvt.Name.Replace("'", "&apos;");
                         if (addInXmlPart.SelectSingleNode("data/PivotGroupings/PivotGrouping[@pivotName='" + modifiedObjectName + "'][@worksheetName='" + ws.Name + "'][@pivotType='Table']") != null) {
-                            pvtGrouping = addInXmlPart.SelectSingleNode("data/PivotGroupings/PivotGrouping[@pivotName='" + modifiedObjectName + "'][@worksheetName='" + ws.Name + "'][@pivotType='Table']").Attributes[4].NodeValue.ToString();
+                            objectGrouping = addInXmlPart.SelectSingleNode("data/PivotGroupings/PivotGrouping[@pivotName='" + modifiedObjectName + "'][@worksheetName='" + ws.Name + "'][@pivotType='Table']").Attributes[4].NodeValue.ToString();
                         }
                         else
                         {
-                            pvtGrouping = "";
+                            objectGrouping = "";
                         }
 
                         //...................................................................................
 
                         //Creating a new row in the data grid for each pivot
                         DataGridViewRow row = new DataGridViewRow();
-                        row.CreateCells(dgrPivotTables, pvt.Name, ws.Name, "Go To", pvtGrouping, dataSoruceName, dataSrouceType, dataSoruceDesc, pvt.RefreshDate, pageFields, rowFields, columnFields, dataFields);
+                        row.CreateCells(dgrPivotTables, pvt.Name, ws.Name, "Go To", objectGrouping, dataSoruceName, dataSrouceType, dataSoruceDesc, pvt.RefreshDate, pageFields, rowFields, columnFields, dataFields);
                         dgrPivotTables.Rows.Add(row);
                     }
 
@@ -243,9 +245,25 @@ namespace AAExcelAddIn
                             lstObjColumns += (lstObjColumns == "") ? lstColumn.Name : "; " + lstColumn.Name;
                         }
 
+
+                        //Checking if a grouping was assigned to the pivot or not
+                        //...................................................................................
+
+                        modifiedObjectName = lst.Name.Replace("'", "&apos;");
+                        if (addInXmlPart.SelectSingleNode("data/ListObjectGroupings/ListObjectGrouping[@lstObjName='" + modifiedObjectName + "'][@worksheetName='" + ws.Name + "']") != null)
+                        {
+                            objectGrouping = addInXmlPart.SelectSingleNode("data/ListObjectGroupings/ListObjectGrouping[@lstObjName='" + modifiedObjectName + "'][@worksheetName='" + ws.Name + "']").Attributes[3].NodeValue.ToString();
+                        }
+                        else
+                        {
+                            objectGrouping = "";
+                        }
+
+                        //...................................................................................
+
                         //Creating a new row in the data grid for each list object
                         DataGridViewRow row = new DataGridViewRow();
-                        row.CreateCells(dgrListObjects, lst.Name, ws.Name, dataSoruceName, dataSrouceType, dataSoruceDesc, lstObjColumns);
+                        row.CreateCells(dgrListObjects, lst.Name, ws.Name, "Go To", objectGrouping, dataSoruceName, dataSrouceType, dataSoruceDesc, lstObjColumns);
                         dgrListObjects.Rows.Add(row);
                     }
                 }
@@ -457,51 +475,6 @@ namespace AAExcelAddIn
             dgrDataSources.ClearSelection();
         }
 
-        //User double clicks to go to selected list object in the workbook
-        private void dgrListObjects_CellDoubleClick(object sender, DataGridViewCellEventArgs e)
-        {
-
-            //Variables
-            Excel.Application app;
-            Excel.Workbook thisWorkbook;
-
-            //Making sure the double clicked row isn't the header
-            if (e.RowIndex != -1)
-            {
-
-                //Creating the activeworkbook object
-                app = (Excel.Application)Marshal.GetActiveObject("Excel.Application");
-                app.Visible = true;
-                thisWorkbook = (Excel.Workbook)app.ActiveWorkbook;
-
-                //Determining where the list object is
-                Excel.Worksheet ws = thisWorkbook.Sheets[dgrListObjects.Rows[e.RowIndex].Cells[1].Value];
-                Excel.ListObject lst = ws.ListObjects[dgrListObjects.Rows[e.RowIndex].Cells[0].Value];
-                Excel.Range rng = ws.Range[lst.Range.Address.Substring(0, lst.Range.Address.IndexOf(':'))];
-
-                //Checking if the worksheet the list object resides in is hidden
-                if (ws.Visible == Excel.XlSheetVisibility.xlSheetHidden)
-                {
-
-                    //Confirming with the user that they wish to unhide the sheet the list object resides on
-                    DialogResult msgboxResult = MessageBox.Show("The worksheet this Table resides in is currently hidden. Do you wish the worksheet?", this.Text, MessageBoxButtons.YesNo, MessageBoxIcon.Question);
-
-                    //Unhiding the worksheet if the user confirmed it
-                    if (msgboxResult == DialogResult.Yes)
-                    {
-                        ws.Visible = Excel.XlSheetVisibility.xlSheetVisible;
-                    }
-                }
-
-                //Moving the cell selector to the list object
-                if (ws.Visible == Excel.XlSheetVisibility.xlSheetVisible)
-                {
-                    ws.Select();
-                    rng.Select();
-                }
-            }
-        }
-
         //User selects a data source record that is a pivot cache to see its fields
         private void dgrDataSources_SelectionChanged(object sender, EventArgs e)
         {
@@ -608,7 +581,8 @@ namespace AAExcelAddIn
                 if (creatingNewGrouping)
                 {
                     addInXmlPart.AddNode(addInXmlPart.SelectSingleNode("data/Groupings"), "Grouping", NodeValue: dgrGroupings[e.ColumnIndex, e.RowIndex].Value.ToString());
-                    ((DataGridViewComboBoxColumn)dgrPivotTables.Columns["PvtGrouping"]).Items.Add(dgrGroupings[e.ColumnIndex, e.RowIndex].Value.ToString());
+                    ((DataGridViewComboBoxColumn)dgrPivotTables.Columns["pvtGrouping"]).Items.Add(dgrGroupings[e.ColumnIndex, e.RowIndex].Value.ToString());
+                    ((DataGridViewComboBoxColumn)dgrListObjects.Columns["lstObjGrouping"]).Items.Add(dgrGroupings[e.ColumnIndex, e.RowIndex].Value.ToString());
                 }
                 else
                 {
@@ -616,19 +590,41 @@ namespace AAExcelAddIn
                     //Updating the grouping in the xml part
                     addInXmlPart.SelectSingleNode("data/Groupings/Grouping[text()=\"" + previousGrouping + "\"]").Text = dgrGroupings[e.ColumnIndex, e.RowIndex].Value.ToString();
 
-                    //Updating the grouping assigned to the records in the PivotTables tab data grid view
+                    //Updating the grouping assigned to the records in the data grid views
+                    //--------------------------------------------------------------------------------------------------
+
+                    //PivotTables
                     foreach (DataGridViewRow row in dgrPivotTables.Rows)
                     {
-                        if (row.Cells[3].Value.ToString() == previousGrouping)
+                        if (row.Cells[3].Value != null)
                         {
-                            row.Cells[3].Value = dgrGroupings[0, e.RowIndex].Value.ToString();
+                            if (row.Cells[3].Value.ToString() == previousGrouping)
+                            {
+                                row.Cells[3].Value = dgrGroupings[0, e.RowIndex].Value.ToString();
+                            }
                         }
                     }
-                    ((DataGridViewComboBoxColumn)dgrPivotTables.Columns["PvtGrouping"]).Items.Remove(previousGrouping);
-                    ((DataGridViewComboBoxColumn)dgrPivotTables.Columns["PvtGrouping"]).Items.Add(dgrGroupings[e.ColumnIndex, e.RowIndex].Value.ToString());
+                    ((DataGridViewComboBoxColumn)dgrPivotTables.Columns["pvtGrouping"]).Items.Remove(previousGrouping);
+                    ((DataGridViewComboBoxColumn)dgrPivotTables.Columns["pvtGrouping"]).Items.Add(dgrGroupings[e.ColumnIndex, e.RowIndex].Value.ToString());
+
+                    //List Objects
+                    foreach (DataGridViewRow row in dgrListObjects.Rows)
+                    {
+                        if (row.Cells[3].Value != null)
+                        {
+                            if (row.Cells[3].Value.ToString() == previousGrouping)
+                            {
+                                row.Cells[3].Value = dgrGroupings[0, e.RowIndex].Value.ToString();
+                            }
+                        }   
+                    }
+                    ((DataGridViewComboBoxColumn)dgrListObjects.Columns["lstObjGrouping"]).Items.Remove(previousGrouping);
+                    ((DataGridViewComboBoxColumn)dgrListObjects.Columns["lstObjGrouping"]).Items.Add(dgrGroupings[e.ColumnIndex, e.RowIndex].Value.ToString());
+
+                    //--------------------------------------------------------------------------------------------------
 
                     //Updating the groupings assigned to objects in the xml part
-                    foreach(Office.CustomXMLNode xmlNode in addInXmlPart.SelectNodes("data/PivotGroupings/PivotGrouping[@grouping=\"" + previousGrouping + "\"]"))
+                    foreach (Office.CustomXMLNode xmlNode in addInXmlPart.SelectNodes("data/PivotGroupings/PivotGrouping[@grouping=\"" + previousGrouping + "\"]"))
                     {
                         xmlNode.Attributes[4].NodeValue = dgrGroupings[e.ColumnIndex, e.RowIndex].Value.ToString();
                     }
@@ -656,20 +652,50 @@ namespace AAExcelAddIn
                     addInXmlPart.SelectSingleNode("data/Groupings/Grouping[text()=\"" + e.Row.Cells[0].Value.ToString() + "\"]").Delete();
 
                     //Removing grouping from comboboxes in data grid views
+                    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+                    //PivotTables
                     foreach (DataGridViewRow row in dgrPivotTables.Rows)
                     {
-                        if (row.Cells[3].Value.ToString() == dgrGroupings[0, e.Row.Index].Value.ToString())
+                        if (row.Cells[3].Value != null)
                         {
-                            row.Cells[3].Value = "";
+                            if (row.Cells[3].Value.ToString() == dgrGroupings[0, e.Row.Index].Value.ToString())
+                            {
+                                row.Cells[3].Value = "";
+                            }
                         }
                     }
-                    ((DataGridViewComboBoxColumn)dgrPivotTables.Columns["PvtGrouping"]).Items.Remove(dgrGroupings[0, e.Row.Index].Value.ToString());
+                    ((DataGridViewComboBoxColumn)dgrPivotTables.Columns["pvtGrouping"]).Items.Remove(dgrGroupings[0, e.Row.Index].Value.ToString());
+
+                    //List Objects
+                    foreach (DataGridViewRow row in dgrListObjects.Rows)
+                    {
+                        if (row.Cells[3].Value != null)
+                        {
+                            if (row.Cells[3].Value.ToString() == dgrGroupings[0, e.Row.Index].Value.ToString())
+                            {
+                                row.Cells[3].Value = "";
+                            }
+                        }
+                    }
+                    ((DataGridViewComboBoxColumn)dgrListObjects.Columns["lstObjGrouping"]).Items.Remove(dgrGroupings[0, e.Row.Index].Value.ToString());
+                    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
                     //Removing the grouping assigned to objects in the xml part
+                    //>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+                    //Pivot groupings
                     foreach (Office.CustomXMLNode xmlNode in addInXmlPart.SelectNodes("data/PivotGroupings/PivotGrouping[@grouping=\"" + e.Row.Cells[0].Value.ToString() + "\"]"))
                     {
                         xmlNode.Delete();
                     }
+
+                    //List Object groupings
+                    foreach (Office.CustomXMLNode xmlNode in addInXmlPart.SelectNodes("data/ListObjectGroupings/ListObjectGrouping[@grouping=\"" + e.Row.Cells[0].Value.ToString() + "\"]"))
+                    {
+                        xmlNode.Delete();
+                    }
+                    //>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
                 }
             }
         }
@@ -783,8 +809,113 @@ namespace AAExcelAddIn
                             //Pivot Type
                             addInXmlPart.AddNode(addInXmlPart.SelectSingleNode("data/PivotGroupings/PivotGrouping[last()]"), "pivotType", "", NodeType: Office.MsoCustomXMLNodeType.msoCustomXMLNodeAttribute, NodeValue: "Table");
 
-                            //Pivot Type
+                            //Grouping
                             addInXmlPart.AddNode(addInXmlPart.SelectSingleNode("data/PivotGroupings/PivotGrouping[last()]"), "grouping", "", NodeType: Office.MsoCustomXMLNodeType.msoCustomXMLNodeAttribute, NodeValue: dgrPivotTables[e.ColumnIndex, e.RowIndex].Value.ToString());
+                            //+++++++++++++++++++++++++++++++++++++++++++++++++++++++
+                        }
+                    }
+                    break;
+            }
+        }
+
+        //User clicks the Go To button in the list object data grid
+        private void dgrListObjects_CellClick(object sender, DataGridViewCellEventArgs e)
+        {
+            
+            //Variables
+            Excel.Application app;
+            Excel.Workbook thisWorkbook;
+
+            //Making sure the double clicked row isn't the header
+            if (e.ColumnIndex == 2 && e.RowIndex != -1)
+            {
+
+                //Creating the activeworkbook object
+                app = (Excel.Application)Marshal.GetActiveObject("Excel.Application");
+                app.Visible = true;
+                thisWorkbook = (Excel.Workbook)app.ActiveWorkbook;
+
+                //Determining where the list object is
+                Excel.Worksheet ws = thisWorkbook.Sheets[dgrListObjects.Rows[e.RowIndex].Cells[1].Value];
+                Excel.ListObject lst = ws.ListObjects[dgrListObjects.Rows[e.RowIndex].Cells[0].Value];
+                Excel.Range rng = ws.Range[lst.Range.Address.Substring(0, lst.Range.Address.IndexOf(':'))];
+
+                //Checking if the worksheet the list object resides in is hidden
+                if (ws.Visible == Excel.XlSheetVisibility.xlSheetHidden)
+                {
+
+                    //Confirming with the user that they wish to unhide the sheet the list object resides on
+                    DialogResult msgboxResult = MessageBox.Show("The worksheet this Table resides in is currently hidden. Do you wish the worksheet?", this.Text, MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+
+                    //Unhiding the worksheet if the user confirmed it
+                    if (msgboxResult == DialogResult.Yes)
+                    {
+                        ws.Visible = Excel.XlSheetVisibility.xlSheetVisible;
+                    }
+                }
+
+                //Moving the cell selector to the list object
+                if (ws.Visible == Excel.XlSheetVisibility.xlSheetVisible)
+                {
+                    ws.Select();
+                    rng.Select();
+                }
+            }
+        }
+
+        //User changes data in the list objects grid view
+        private void dgrListObjects_CellEndEdit(object sender, DataGridViewCellEventArgs e)
+        {
+
+            //Variables
+            string modifiedObjectName;
+
+            //Run a different procedure based on which cell was changed
+            switch (e.ColumnIndex)
+            {
+
+                //Grouping dropdown
+                case 3:
+
+
+                    //If the user selects the blank option in the dropdown and there already isnt a gropuing record for the selected list object, do nothing
+                    modifiedObjectName = dgrListObjects[0, e.RowIndex].Value.ToString().Replace("'", "&apos;");
+                    if (dgrListObjects[e.ColumnIndex, e.RowIndex].Value != null || addInXmlPart.SelectSingleNode("data/ListObjectGroupings/ListObjectGrouping[@lstObjName='" + modifiedObjectName + "'][@worksheetName='" + dgrListObjects[1, e.RowIndex].Value.ToString() + "']") != null)
+                    {
+
+                        //If the list object. worksheet, and type key exists, update the grouping of the key
+                        //Otherwise, create a new record for the pivot grouping
+                        if (addInXmlPart.SelectSingleNode("data/ListObjectGroupings/ListObjectGrouping[@lstObjName='" + modifiedObjectName + "'][@worksheetName='" + dgrListObjects[1, e.RowIndex].Value.ToString() + "']") != null)
+                        {
+
+                            //If the user chooses the blank option, then just delete the record in the xml part
+                            //Otherwise, update the record to the newly selected grouping
+                            if (dgrListObjects[e.ColumnIndex, e.RowIndex].Value == null)
+                            {
+                                addInXmlPart.SelectSingleNode("data/ListObjectGroupings/ListObjectGrouping[@lstObjName='" + modifiedObjectName + "'][@worksheetName='" + dgrListObjects[1, e.RowIndex].Value.ToString() + "']").Delete();
+                            }
+                            else
+                            {
+                                addInXmlPart.SelectSingleNode("data/ListObjectGroupings/ListObjectGrouping[@lstObjName='" + modifiedObjectName + "'][@worksheetName='" + dgrListObjects[1, e.RowIndex].Value.ToString() + "']").Attributes[3].NodeValue = dgrListObjects[e.ColumnIndex, e.RowIndex].Value.ToString();
+                            }
+                        }
+                        else
+                        {
+
+                            //Creating the new list object grouping
+                            addInXmlPart.AddNode(addInXmlPart.SelectSingleNode("data/ListObjectGroupings"), "ListObjectGrouping");
+
+                            //Creating attributes
+                            //+++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+                            //List Object Name
+                            addInXmlPart.AddNode(addInXmlPart.SelectSingleNode("data/ListObjectGroupings/ListObjectGrouping[last()]"), "lstObjName", "", NodeType: Office.MsoCustomXMLNodeType.msoCustomXMLNodeAttribute, NodeValue: modifiedObjectName);
+
+                            //Worksheet Name
+                            addInXmlPart.AddNode(addInXmlPart.SelectSingleNode("data/ListObjectGroupings/ListObjectGrouping[last()]"), "worksheetName", "", NodeType: Office.MsoCustomXMLNodeType.msoCustomXMLNodeAttribute, NodeValue: dgrListObjects[1, e.RowIndex].Value.ToString());
+
+                            //Grouping
+                            addInXmlPart.AddNode(addInXmlPart.SelectSingleNode("data/ListObjectGroupings/ListObjectGrouping[last()]"), "grouping", "", NodeType: Office.MsoCustomXMLNodeType.msoCustomXMLNodeAttribute, NodeValue: dgrListObjects[e.ColumnIndex, e.RowIndex].Value.ToString());
                             //+++++++++++++++++++++++++++++++++++++++++++++++++++++++
                         }
                     }
