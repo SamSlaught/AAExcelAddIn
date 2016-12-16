@@ -24,13 +24,24 @@ namespace AAExcelAddIn
         }
 
         //Global variables
+        //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+        ///<summary>This is the custom xml part that drives the navigator.</summary>
         public Office.CustomXMLPart addInXmlPart;
-        public bool creatingNewGrouping, newRecordRow;
-        public string previousGrouping, previousObjectName;
+        ///<summary>Indicates whether a new grouping being created in the Grouping tab or not.</summary>
+        public bool creatingNewGrouping;
+        ///<summary>Indicates if the current record in the groupings data grid in the new record row.</summary>
+        public bool newRecordRow;
+        ///<summary>Stores what the grouping was named before it was updated in the Groupings tab.</summary>
+        public string previousGrouping;
+        ///<summary>Stores what the previous string value of a data grid cell was before it was updated.</summary>
+        public string previousDataGridStringValue;
+        ///<summary>The index of the row that was previously selected when the row selection changed in the data source data grid.</summary>
+        public int previousDataSrcRowIndex = -1;
+        //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
         private void PvtLstObjNavigator_Load(object sender, EventArgs e)
         {
-
+            
             //Variables
             Excel.Application app;
             Excel.Workbook thisWorkbook;
@@ -85,7 +96,7 @@ namespace AAExcelAddIn
                 //If the id was not found in the loop, create the xml part
                 if (customXmlPartDocProp.Value == "0")
                 {
-                    addInXmlPart = thisWorkbook.CustomXMLParts.Add("<data>" + xmlPartTitle + "<Groupings></Groupings><PivotGroupings></PivotGroupings><ListObjectGroupings></ListObjectGroupings></data>");
+                    addInXmlPart = thisWorkbook.CustomXMLParts.Add("<data>" + xmlPartTitle + "<Groupings></Groupings><PivotGroupings></PivotGroupings><ListObjectGroupings></ListObjectGroupings><ConnectionGroupings></ConnectionGroupings></data>");
                     customXmlPartDocProp.Value = addInXmlPart.Id;
                 }
             }
@@ -111,10 +122,12 @@ namespace AAExcelAddIn
             //Loading all the current groupings into the grouping dropdowns
             ((DataGridViewComboBoxColumn)dgrPivotTables.Columns["pvtGrouping"]).Items.Add("");
             ((DataGridViewComboBoxColumn)dgrListObjects.Columns["lstObjGrouping"]).Items.Add("");
+            ((DataGridViewComboBoxColumn)dgrWbConnections.Columns["dtaSrcGrouping"]).Items.Add("");
             foreach (Office.CustomXMLNode node in addInXmlPart.SelectSingleNode("data/Groupings").ChildNodes)
             {
                 ((DataGridViewComboBoxColumn)dgrPivotTables.Columns["pvtGrouping"]).Items.Add(node.Text);
                 ((DataGridViewComboBoxColumn)dgrListObjects.Columns["lstObjGrouping"]).Items.Add(node.Text);
+                ((DataGridViewComboBoxColumn)dgrWbConnections.Columns["dtaSrcGrouping"]).Items.Add(node.Text);
             }
 
             //>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
@@ -460,23 +473,37 @@ namespace AAExcelAddIn
                     { }
                 }
 
+                //Checking if a grouping was assigned to the connection or not
+                //...................................................................................
+
+                modifiedObjectName = conn.Name.Replace("'", "&apos;");
+                if (addInXmlPart.SelectSingleNode("data/ConnectionGroupings/ConnectionGrouping[@connectionName='" + modifiedObjectName + "']") != null)
+                {
+                    objectGrouping = addInXmlPart.SelectSingleNode("data/ConnectionGroupings/ConnectionGrouping[@connectionName='" + modifiedObjectName + "']").Attributes[2].NodeValue.ToString();
+                }
+                else
+                {
+                    objectGrouping = "";
+                }
+                //...................................................................................
+
                 //Creating a new row in the data grid for each list object
                 DataGridViewRow row = new DataGridViewRow();
-                row.CreateCells(dgrDataSources, conn.Name, conn.Description, connType, connPivotCache, connPvtChcSize, connLastRefreshed, connReadOnly, connCommandText, connFilePath, connCommandType);
-                dgrDataSources.Rows.Add(row);
+                row.CreateCells(dgrWbConnections, conn.Name, conn.Description, connType, objectGrouping, connPivotCache, connPvtChcSize, connLastRefreshed, connReadOnly, connCommandText, connFilePath, connCommandType);
+                dgrWbConnections.Rows.Add(row);
             }
 
             //Right aligning certain columns in the data source grid view
-            dgrDataSources.Columns["dtaSrcPvtChcMemory"].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
+            dgrWbConnections.Columns["dtaSrcPvtChcMemory"].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
 
             //Unselecting the first row in the data grids
             dgrPivotTables.ClearSelection();
             dgrListObjects.ClearSelection();
-            dgrDataSources.ClearSelection();
+            dgrWbConnections.ClearSelection();
         }
 
         //User selects a data source record that is a pivot cache to see its fields
-        private void dgrDataSources_SelectionChanged(object sender, EventArgs e)
+        private void dgrWbConnections_SelectionChanged(object sender, EventArgs e)
         {
 
             //Variables
@@ -484,88 +511,105 @@ namespace AAExcelAddIn
             Excel.Workbook thisWorkbook;
             bool cacheFieldsFound = false;
             string pvtFieldDataType;
+            DataGridViewColumn sortedColumn;
 
-            //Creating the activeworkbook object
-            app = (Excel.Application)Marshal.GetActiveObject("Excel.Application");
-            app.Visible = true;
-            thisWorkbook = (Excel.Workbook)app.ActiveWorkbook;
-
-            //Resetting the fields sub grid if needed
-            if (dgrPvtChcFields.RowCount > 0)
-            {
-                dgrPvtChcFields.Rows.Clear();
-                dgrPvtChcFields.Refresh();
-            }
-
-            //Only check for piovt cache fields if the data source is linked to a pivot cache
-            if (Convert.ToBoolean(dgrDataSources.Rows[dgrDataSources.CurrentCell.RowIndex].Cells[3].Value) == true)
+            //If the currently selected row did not change, do not reload the pivot cache fields grid
+            if (previousDataSrcRowIndex != dgrWbConnections.CurrentCell.RowIndex)
             {
 
-                //Looping through each pivot cache to see if the selected connection is linked to any of them
-                foreach (Excel.PivotCache pvtCache in thisWorkbook.PivotCaches())
+                //Creating the activeworkbook object
+                app = (Excel.Application)Marshal.GetActiveObject("Excel.Application");
+                app.Visible = true;
+                thisWorkbook = (Excel.Workbook)app.ActiveWorkbook;
+
+                //Restting the sorting in the sub grid
+                if (dgrPvtChcFields.SortedColumn != null)
+                {
+                    sortedColumn = dgrPvtChcFields.Columns[dgrPvtChcFields.SortedColumn.Index];
+                    sortedColumn.SortMode = DataGridViewColumnSortMode.NotSortable;
+                    sortedColumn.SortMode = DataGridViewColumnSortMode.Automatic;
+                }
+
+                //Resetting the fields sub grid if needed
+                if (dgrPvtChcFields.RowCount > 0)
+                {
+                    dgrPvtChcFields.Rows.Clear();
+                    dgrPvtChcFields.Refresh();
+                }
+
+                //Only check for piovt cache fields if the data source is linked to a pivot cache
+                if (Convert.ToBoolean(dgrWbConnections.Rows[dgrWbConnections.CurrentCell.RowIndex].Cells[4].Value) == true)
                 {
 
-                    //Handle scenario if a pivot cache is not linked to a workbook connection
-                    try
+                    //Looping through each pivot cache to see if the selected connection is linked to any of them
+                    foreach (Excel.PivotCache pvtCache in thisWorkbook.PivotCaches())
                     {
 
-                        //If the workbook connection's name matches the name of the connection linked to the current pivot cache, grab its fields
-                        if (pvtCache.WorkbookConnection.Name == dgrDataSources.Rows[dgrDataSources.CurrentCell.RowIndex].Cells[0].Value.ToString())
+                        //Handle scenario if a pivot cache is not linked to a workbook connection
+                        try
                         {
 
-                            //Loop through each pivot in the workbook until one is found that was created from the current pivot cache
-                            foreach (Excel.Worksheet ws in thisWorkbook.Worksheets)
+                            //If the workbook connection's name matches the name of the connection linked to the current pivot cache, grab its fields
+                            if (pvtCache.WorkbookConnection.Name == dgrWbConnections.Rows[dgrWbConnections.CurrentCell.RowIndex].Cells[0].Value.ToString())
                             {
-                                foreach (Excel.PivotTable pvt in ws.PivotTables())
+
+                                //Loop through each pivot in the workbook until one is found that was created from the current pivot cache
+                                foreach (Excel.Worksheet ws in thisWorkbook.Worksheets)
                                 {
-
-                                    //If the current pivot table pulls its data from the pivot cache, grab its fields and load them into the data grid view
-                                    if (pvt.PivotCache().Index == pvtCache.Index)
+                                    foreach (Excel.PivotTable pvt in ws.PivotTables())
                                     {
-                                        foreach (Excel.PivotField pvtField in pvt.PivotFields())
-                                        {
 
-                                            //Determining the current field's data type
-                                            switch (pvtField.DataType)
+                                        //If the current pivot table pulls its data from the pivot cache, grab its fields and load them into the data grid view
+                                        if (pvt.PivotCache().Index == pvtCache.Index)
+                                        {
+                                            foreach (Excel.PivotField pvtField in pvt.PivotFields())
                                             {
 
-                                                case Excel.XlPivotFieldDataType.xlDate:
-                                                    pvtFieldDataType = "Date/Time";
-                                                    break;
+                                                //Determining the current field's data type
+                                                switch (pvtField.DataType)
+                                                {
 
-                                                case Excel.XlPivotFieldDataType.xlNumber:
-                                                    pvtFieldDataType = "Number/Boolean";
-                                                    break;
+                                                    case Excel.XlPivotFieldDataType.xlDate:
+                                                        pvtFieldDataType = "Date/Time";
+                                                        break;
 
-                                                case Excel.XlPivotFieldDataType.xlText:
-                                                    pvtFieldDataType = "Text";
-                                                    break;
+                                                    case Excel.XlPivotFieldDataType.xlNumber:
+                                                        pvtFieldDataType = "Number/Boolean";
+                                                        break;
 
-                                                default:
-                                                    pvtFieldDataType = "Unknown";
-                                                    break;
+                                                    case Excel.XlPivotFieldDataType.xlText:
+                                                        pvtFieldDataType = "Text";
+                                                        break;
+
+                                                    default:
+                                                        pvtFieldDataType = "Unknown";
+                                                        break;
+                                                }
+
+                                                //Creating a new row in the data grid for each list object
+                                                DataGridViewRow row = new DataGridViewRow();
+                                                row.CreateCells(dgrPvtChcFields, pvtField.SourceName, pvtFieldDataType);
+                                                dgrPvtChcFields.Rows.Add(row);
                                             }
-
-                                            //Creating a new row in the data grid for each list object
-                                            DataGridViewRow row = new DataGridViewRow();
-                                            row.CreateCells(dgrPvtChcFields, pvtField.SourceName, pvtFieldDataType);
-                                            dgrPvtChcFields.Rows.Add(row);
+                                            cacheFieldsFound = true;
+                                            break;
                                         }
-                                        cacheFieldsFound = true;
+                                    }
+
+                                    //If the related pivot cache was found, exit the loop
+                                    if (cacheFieldsFound == true)
+                                    {
                                         break;
                                     }
                                 }
-
-                                //If the related pivot cache was found, exit the loop
-                                if (cacheFieldsFound == true)
-                                {
-                                    break;
-                                }
                             }
                         }
+                        catch { }
                     }
-                    catch { }                        
                 }
+
+                //Storing that this was last row selected
+                previousDataSrcRowIndex = dgrWbConnections.CurrentCell.RowIndex;
             }
         }
 
@@ -583,6 +627,7 @@ namespace AAExcelAddIn
                     addInXmlPart.AddNode(addInXmlPart.SelectSingleNode("data/Groupings"), "Grouping", NodeValue: dgrGroupings[e.ColumnIndex, e.RowIndex].Value.ToString());
                     ((DataGridViewComboBoxColumn)dgrPivotTables.Columns["pvtGrouping"]).Items.Add(dgrGroupings[e.ColumnIndex, e.RowIndex].Value.ToString());
                     ((DataGridViewComboBoxColumn)dgrListObjects.Columns["lstObjGrouping"]).Items.Add(dgrGroupings[e.ColumnIndex, e.RowIndex].Value.ToString());
+                    ((DataGridViewComboBoxColumn)dgrWbConnections.Columns["dtaSrcGrouping"]).Items.Add(dgrGroupings[e.ColumnIndex, e.RowIndex].Value.ToString());
                 }
                 else
                 {
@@ -620,6 +665,20 @@ namespace AAExcelAddIn
                     }
                     ((DataGridViewComboBoxColumn)dgrListObjects.Columns["lstObjGrouping"]).Items.Remove(previousGrouping);
                     ((DataGridViewComboBoxColumn)dgrListObjects.Columns["lstObjGrouping"]).Items.Add(dgrGroupings[e.ColumnIndex, e.RowIndex].Value.ToString());
+
+                    //Data Sources
+                    foreach (DataGridViewRow row in dgrWbConnections.Rows)
+                    {
+                        if (row.Cells[3].Value != null)
+                        {
+                            if (row.Cells[3].Value.ToString() == previousGrouping)
+                            {
+                                row.Cells[3].Value = dgrGroupings[0, e.RowIndex].Value.ToString();
+                            }
+                        }
+                    }
+                    ((DataGridViewComboBoxColumn)dgrWbConnections.Columns["dtaSrcGrouping"]).Items.Remove(previousGrouping);
+                    ((DataGridViewComboBoxColumn)dgrWbConnections.Columns["dtaSrcGrouping"]).Items.Add(dgrGroupings[e.ColumnIndex, e.RowIndex].Value.ToString());
 
                     //--------------------------------------------------------------------------------------------------
 
@@ -679,6 +738,19 @@ namespace AAExcelAddIn
                         }
                     }
                     ((DataGridViewComboBoxColumn)dgrListObjects.Columns["lstObjGrouping"]).Items.Remove(dgrGroupings[0, e.Row.Index].Value.ToString());
+
+                    //Data Sources
+                    foreach (DataGridViewRow row in dgrWbConnections.Rows)
+                    {
+                        if (row.Cells[3].Value != null)
+                        {
+                            if (row.Cells[3].Value.ToString() == dgrGroupings[0, e.Row.Index].Value.ToString())
+                            {
+                                row.Cells[3].Value = "";
+                            }
+                        }
+                    }
+                    ((DataGridViewComboBoxColumn)dgrWbConnections.Columns["dtaSrcGrouping"]).Items.Remove(dgrGroupings[0, e.Row.Index].Value.ToString());
                     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
                     //Removing the grouping assigned to objects in the xml part
@@ -692,6 +764,12 @@ namespace AAExcelAddIn
 
                     //List Object groupings
                     foreach (Office.CustomXMLNode xmlNode in addInXmlPart.SelectNodes("data/ListObjectGroupings/ListObjectGrouping[@grouping=\"" + e.Row.Cells[0].Value.ToString() + "\"]"))
+                    {
+                        xmlNode.Delete();
+                    }
+
+                    //List Object groupings
+                    foreach (Office.CustomXMLNode xmlNode in addInXmlPart.SelectNodes("data/ConnectionGroupings/ConnectionGrouping[@grouping=\"" + e.Row.Cells[0].Value.ToString() + "\"]"))
                     {
                         xmlNode.Delete();
                     }
@@ -780,11 +858,11 @@ namespace AAExcelAddIn
 
                     //Renaming the pivot table
                     ws = thisWorkbook.Worksheets[dgrPivotTables[1, e.RowIndex].Value.ToString()];
-                    pvt = ws.PivotTables(previousObjectName);
+                    pvt = ws.PivotTables(previousDataGridStringValue);
                     pvt.Name = dgrPivotTables[0, e.RowIndex].Value.ToString();
 
                     //Updating the custom xml part of the pivot table grouping if there is one
-                    modifiedPrevObjName = previousObjectName.ToString().Replace("'", "&apos;");
+                    modifiedPrevObjName = previousDataGridStringValue.ToString().Replace("'", "&apos;");
                     modifiedObjectName = pvt.Name.ToString().Replace("'", "&apos;");
                     if (addInXmlPart.SelectSingleNode("data/PivotGroupings/PivotGrouping[@pivotName = '" + modifiedPrevObjName + "'][@worksheetName='" + dgrPivotTables[1, e.RowIndex].Value.ToString() + "'][@pivotType='Table']") != null)
                     {
@@ -810,7 +888,7 @@ namespace AAExcelAddIn
                     if (dgrPivotTables[e.ColumnIndex, e.RowIndex].Value != null || addInXmlPart.SelectSingleNode("data/PivotGroupings/PivotGrouping[@pivotName='" + modifiedObjectName + "'][@worksheetName='" + dgrPivotTables[1, e.RowIndex].Value.ToString() + "'][@pivotType='Table']") != null)
                     {
 
-                        //If the pivot. worksheet, and type key exists, update the grouping of the key
+                        //If the pivot, worksheet, and type key exists, update the grouping of the key
                         //Otherwise, create a new record for the pivot grouping
                         if (addInXmlPart.SelectSingleNode("data/PivotGroupings/PivotGrouping[@pivotName='" + modifiedObjectName + "'][@worksheetName='" + dgrPivotTables[1, e.RowIndex].Value.ToString() + "'][@pivotType='Table']") != null)
                         {
@@ -924,7 +1002,7 @@ namespace AAExcelAddIn
                     //Updating the custom xml part of the list object grouping if there is one
                     ws = thisWorkbook.Worksheets[dgrListObjects[1, e.RowIndex].Value.ToString()];
                     lst = ws.ListObjects[dgrListObjects[e.ColumnIndex, e.RowIndex].Value.ToString()];
-                    modifiedPrevObjName = previousObjectName.ToString().Replace("'", "&apos;");
+                    modifiedPrevObjName = previousDataGridStringValue.ToString().Replace("'", "&apos;");
                     modifiedObjectName = lst.Name.ToString().Replace("'", "&apos;");
                     if (addInXmlPart.SelectSingleNode("data/ListObjectGroupings/ListObjectGrouping[@lstObjName = '" + modifiedPrevObjName + "'][@worksheetName='" + dgrListObjects[1, e.RowIndex].Value.ToString() + "']") != null)
                     {
@@ -950,7 +1028,7 @@ namespace AAExcelAddIn
                     if (dgrListObjects[e.ColumnIndex, e.RowIndex].Value != null || addInXmlPart.SelectSingleNode("data/ListObjectGroupings/ListObjectGrouping[@lstObjName='" + modifiedObjectName + "'][@worksheetName='" + dgrListObjects[1, e.RowIndex].Value.ToString() + "']") != null)
                     {
 
-                        //If the list object. worksheet, and type key exists, update the grouping of the key
+                        //If the list object and worksheet key exists, update the grouping of the key
                         //Otherwise, create a new record for the pivot grouping
                         if (addInXmlPart.SelectSingleNode("data/ListObjectGroupings/ListObjectGrouping[@lstObjName='" + modifiedObjectName + "'][@worksheetName='" + dgrListObjects[1, e.RowIndex].Value.ToString() + "']") != null)
                         {
@@ -1056,7 +1134,7 @@ namespace AAExcelAddIn
 
                 //Pivot Name
                 case 0:
-                    previousObjectName = dgrListObjects[e.ColumnIndex, e.RowIndex].Value.ToString();
+                    previousDataGridStringValue = dgrListObjects[e.ColumnIndex, e.RowIndex].Value.ToString();
                     break;
             }
         }
@@ -1111,7 +1189,7 @@ namespace AAExcelAddIn
 
                 //Pivot Name
                 case 0:
-                    previousObjectName = dgrPivotTables[e.ColumnIndex, e.RowIndex].Value.ToString();
+                    previousDataGridStringValue = dgrPivotTables[e.ColumnIndex, e.RowIndex].Value.ToString();
                     break;
             }
         }
@@ -1149,6 +1227,181 @@ namespace AAExcelAddIn
                         }
                     }
                 }
+            }
+        }
+
+        //If the user is changing a certain value in the connection grid view, run a certain procedure based on which column is being editted
+        private void dgrWbConnections_CellBeginEdit(object sender, DataGridViewCellCancelEventArgs e)
+        {
+
+            //Determine which column is being editted
+            switch (e.ColumnIndex)
+            {
+
+                //Connection Name
+                case 0:
+                    previousDataGridStringValue = dgrWbConnections[0, e.RowIndex].Value.ToString();
+                    break;
+            }
+        }
+
+        //Making sure the user made a valid entry for the editted column in the connection data grid
+        private void dgrWbConnections_CellValidating(object sender, DataGridViewCellValidatingEventArgs e)
+        {
+
+            //Variables
+            Excel.Application app;
+            Excel.Workbook thisWorkbook;
+
+            //Determine which column was editted
+            switch (e.ColumnIndex)
+            {
+
+                //Connection Name
+                case 0:
+
+                    //Making sure the entered connection name isnt blank
+                    if (e.FormattedValue.ToString() == "")
+                    {
+                        MessageBox.Show("Data source names cannot be blank.", this.Text, MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        e.Cancel = true;
+                    }
+                    //Making sure the name of the connection does not exceed 255 characters
+                    else if (e.FormattedValue.ToString().Length > 255)
+                    {
+                        MessageBox.Show("The max length of a Data source name is 255 characters.", this.Text, MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        e.Cancel = true;
+                    }
+
+                    //Making sure the new name for the data source isnt already assigned to a different connection
+                    if (!e.Cancel)
+                    {
+
+                        //Creating the activeworkbook object
+                        app = (Excel.Application)Marshal.GetActiveObject("Excel.Application");
+                        app.Visible = true;
+                        thisWorkbook = (Excel.Workbook)app.ActiveWorkbook;
+
+                        //Looping through each connection and making sure the new name wasn't already assigned to a different connection
+                        foreach (Excel.WorkbookConnection conn in thisWorkbook.Connections)
+                        {
+
+                            if (String.Equals(conn.Name, e.FormattedValue.ToString(), StringComparison.OrdinalIgnoreCase) && !String.Equals(conn.Name, dgrWbConnections[e.ColumnIndex, e.RowIndex].Value.ToString(), StringComparison.OrdinalIgnoreCase))
+                            {
+                                MessageBox.Show("The name you entered is already assinged to a different data source.", this.Text, MessageBoxButtons.OK, MessageBoxIcon.Information);
+                                e.Cancel = true;
+                                break;
+                            }
+                        }
+                    }
+                    break;
+
+                //Connection Description
+                case 1:
+
+                    //Making sure the description of the connection does not exceed 255 characters
+                    if (e.FormattedValue.ToString().Length > 255)
+                    {
+                        MessageBox.Show("The max length of a Data source description is 255 characters.", this.Text, MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        e.Cancel = true;
+                    }
+                    break;
+            }
+        }
+
+        //User changes data in the connections grid view
+        private void dgrWbConnections_CellEndEdit(object sender, DataGridViewCellEventArgs e)
+        {
+
+            //Variables
+            string modifiedPrevObjName, modifiedObjectName;
+            Excel.Application app;
+            Excel.Workbook thisWorkbook;
+            Excel.WorkbookConnection conn;
+
+            //Creating the activeworkbook object
+            app = (Excel.Application)Marshal.GetActiveObject("Excel.Application");
+            app.Visible = true;
+            thisWorkbook = (Excel.Workbook)app.ActiveWorkbook;
+
+            //Run a different procedure based on which cell was changed
+            switch (e.ColumnIndex)
+            {
+
+                //Connection Name
+                case 0:
+
+                    //Renaming the connection
+                    conn = thisWorkbook.Connections[previousDataGridStringValue];
+                    conn.Name = dgrWbConnections[e.ColumnIndex, e.RowIndex].Value.ToString();
+
+                    //Updating the custom xml part of the connection grouping if there is one
+                    modifiedPrevObjName = previousDataGridStringValue.ToString().Replace("'", "&apos;");
+                    modifiedObjectName = conn.Name.ToString().Replace("'", "&apos;");
+                    if (addInXmlPart.SelectSingleNode("data/ConnectionGroupings/ConnectionGrouping[@connectionName = '" + modifiedPrevObjName + "']") != null)
+                    {
+
+                        //Updating the grouping record that is tied to the update connection
+                        addInXmlPart.SelectSingleNode("data/ConnectionGroupings/ConnectionGrouping[@connectionName = '" + modifiedPrevObjName + "']").Attributes[1].NodeValue = modifiedObjectName;
+
+                        //Moving the attributes back to their original locations
+                        //I mean, really? Just updating the value of attribute moves it to the last attribute index of the element?! This hack will have to do I guess
+                        addInXmlPart.SelectSingleNode("data/ConnectionGroupings/ConnectionGrouping[@connectionName = '" + modifiedObjectName + "']").Attributes[1].NodeValue = addInXmlPart.SelectSingleNode("data/ConnectionGroupings/ConnectionGrouping[@connectionName = '" + modifiedObjectName + "']").Attributes[1].NodeValue;
+                        
+                    }
+                    break;
+
+                //Connection Description
+                case 1:
+
+                    //Updating the connection description
+                    conn = thisWorkbook.Connections[dgrWbConnections[0, e.RowIndex].Value.ToString()];
+                    conn.Description = dgrWbConnections[e.ColumnIndex, e.RowIndex].Value.ToString();
+                    break;
+
+                //Grouping dropdown
+                case 3:
+
+
+                    //If the user selects the blank option in the dropdown and there already isnt a gropuing record for the selected connection, do nothing
+                    modifiedObjectName = dgrWbConnections[0, e.RowIndex].Value.ToString().Replace("'", "&apos;");
+                    if (dgrWbConnections[e.ColumnIndex, e.RowIndex].Value != null || addInXmlPart.SelectSingleNode("data/ConnectionGroupings/ConnectionGrouping[@connectionName='" + modifiedObjectName + "']") != null)
+                    {
+
+                        //If the connection key exists, update the grouping of the key
+                        //Otherwise, create a new record for the connection grouping
+                        if (addInXmlPart.SelectSingleNode("data/ConnectionGroupings/ConnectionGrouping[@connectionName='" + modifiedObjectName + "']") != null)
+                        {
+
+                            //If the user chooses the blank option, then just delete the record in the xml part
+                            //Otherwise, update the record to the newly selected grouping
+                            if (dgrWbConnections[e.ColumnIndex, e.RowIndex].Value == null)
+                            {
+                                addInXmlPart.SelectSingleNode("data/ConnectionGroupings/ConnectionGrouping[@connectionName='" + modifiedObjectName + "']").Delete();
+                            }
+                            else
+                            {
+                                addInXmlPart.SelectSingleNode("data/ConnectionGroupings/ConnectionGrouping[@connectionName='" + modifiedObjectName + "']").Attributes[2].NodeValue = dgrWbConnections[e.ColumnIndex, e.RowIndex].Value.ToString();
+                            }
+                        }
+                        else
+                        {
+
+                            //Creating the new connection grouping
+                            addInXmlPart.AddNode(addInXmlPart.SelectSingleNode("data/ConnectionGroupings"), "ConnectionGrouping");
+
+                            //Creating attributes
+                            //+++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+                            //Connection Name
+                            addInXmlPart.AddNode(addInXmlPart.SelectSingleNode("data/ConnectionGroupings/ConnectionGrouping[last()]"), "connectionName", "", NodeType: Office.MsoCustomXMLNodeType.msoCustomXMLNodeAttribute, NodeValue: modifiedObjectName);
+
+                            //Grouping
+                            addInXmlPart.AddNode(addInXmlPart.SelectSingleNode("data/ConnectionGroupings/ConnectionGrouping[last()]"), "grouping", "", NodeType: Office.MsoCustomXMLNodeType.msoCustomXMLNodeAttribute, NodeValue: dgrWbConnections[e.ColumnIndex, e.RowIndex].Value.ToString());
+                            //+++++++++++++++++++++++++++++++++++++++++++++++++++++++
+                        }
+                    }
+                    break;
             }
         }
     }
