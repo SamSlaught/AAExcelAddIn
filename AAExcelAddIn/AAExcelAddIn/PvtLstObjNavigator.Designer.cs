@@ -28,7 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle6 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
             this.tcrNavigator = new System.Windows.Forms.TabControl();
             this.pgePivotTables = new System.Windows.Forms.TabPage();
             this.dgrPivotTables = new System.Windows.Forms.DataGridView();
@@ -60,8 +60,6 @@
             this.pvtChcFieldDataType = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.label1 = new System.Windows.Forms.Label();
             this.dgrWbConnections = new System.Windows.Forms.DataGridView();
-            this.pgeGroupings = new System.Windows.Forms.TabPage();
-            this.dgrGroupings = new System.Windows.Forms.DataGridView();
             this.DataSource = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.dtaSrcDescription = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.dtaSrcType = new System.Windows.Forms.DataGridViewTextBoxColumn();
@@ -73,6 +71,10 @@
             this.dtaSrcCommandText = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.dtaSrcConnectionFile = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.dtaSrcCommandType = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.pgeGroupings = new System.Windows.Forms.TabPage();
+            this.dgrGroupings = new System.Windows.Forms.DataGridView();
+            this.cboGroupingFilter = new System.Windows.Forms.ComboBox();
+            this.label2 = new System.Windows.Forms.Label();
             this.tcrNavigator.SuspendLayout();
             this.pgePivotTables.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dgrPivotTables)).BeginInit();
@@ -91,10 +93,10 @@
             this.tcrNavigator.Controls.Add(this.pgeListObjects);
             this.tcrNavigator.Controls.Add(this.pgeDataSources);
             this.tcrNavigator.Controls.Add(this.pgeGroupings);
-            this.tcrNavigator.Location = new System.Drawing.Point(12, 12);
+            this.tcrNavigator.Location = new System.Drawing.Point(12, 43);
             this.tcrNavigator.Name = "tcrNavigator";
             this.tcrNavigator.SelectedIndex = 0;
-            this.tcrNavigator.Size = new System.Drawing.Size(841, 454);
+            this.tcrNavigator.Size = new System.Drawing.Size(841, 423);
             this.tcrNavigator.TabIndex = 0;
             // 
             // pgePivotTables
@@ -103,7 +105,7 @@
             this.pgePivotTables.Location = new System.Drawing.Point(4, 22);
             this.pgePivotTables.Name = "pgePivotTables";
             this.pgePivotTables.Padding = new System.Windows.Forms.Padding(3);
-            this.pgePivotTables.Size = new System.Drawing.Size(833, 428);
+            this.pgePivotTables.Size = new System.Drawing.Size(833, 397);
             this.pgePivotTables.TabIndex = 0;
             this.pgePivotTables.Text = "PiovtTables";
             this.pgePivotTables.UseVisualStyleBackColor = true;
@@ -131,7 +133,7 @@
             this.dgrPivotTables.MultiSelect = false;
             this.dgrPivotTables.Name = "dgrPivotTables";
             this.dgrPivotTables.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.CellSelect;
-            this.dgrPivotTables.Size = new System.Drawing.Size(821, 416);
+            this.dgrPivotTables.Size = new System.Drawing.Size(821, 385);
             this.dgrPivotTables.TabIndex = 1;
             this.dgrPivotTables.CellBeginEdit += new System.Windows.Forms.DataGridViewCellCancelEventHandler(this.dgrPivotTables_CellBeginEdit);
             this.dgrPivotTables.CellClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgrPivotTables_CellClick);
@@ -229,7 +231,7 @@
             this.pgeListObjects.Location = new System.Drawing.Point(4, 22);
             this.pgeListObjects.Name = "pgeListObjects";
             this.pgeListObjects.Padding = new System.Windows.Forms.Padding(3);
-            this.pgeListObjects.Size = new System.Drawing.Size(833, 428);
+            this.pgeListObjects.Size = new System.Drawing.Size(833, 397);
             this.pgeListObjects.TabIndex = 1;
             this.pgeListObjects.Text = "Tables";
             this.pgeListObjects.UseVisualStyleBackColor = true;
@@ -254,7 +256,7 @@
             this.dgrListObjects.MultiSelect = false;
             this.dgrListObjects.Name = "dgrListObjects";
             this.dgrListObjects.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.CellSelect;
-            this.dgrListObjects.Size = new System.Drawing.Size(820, 415);
+            this.dgrListObjects.Size = new System.Drawing.Size(820, 384);
             this.dgrListObjects.StandardTab = true;
             this.dgrListObjects.TabIndex = 0;
             this.dgrListObjects.CellBeginEdit += new System.Windows.Forms.DataGridViewCellCancelEventHandler(this.dgrListObjects_CellBeginEdit);
@@ -327,7 +329,7 @@
             this.pgeDataSources.Location = new System.Drawing.Point(4, 22);
             this.pgeDataSources.Name = "pgeDataSources";
             this.pgeDataSources.Padding = new System.Windows.Forms.Padding(3);
-            this.pgeDataSources.Size = new System.Drawing.Size(833, 428);
+            this.pgeDataSources.Size = new System.Drawing.Size(833, 397);
             this.pgeDataSources.TabIndex = 2;
             this.pgeDataSources.Text = "Data Sources";
             this.pgeDataSources.UseVisualStyleBackColor = true;
@@ -342,21 +344,21 @@
             this.dgrPvtChcFields.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
             this.pvtChcFieldSrcName,
             this.pvtChcFieldDataType});
-            dataGridViewCellStyle6.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
-            dataGridViewCellStyle6.BackColor = System.Drawing.SystemColors.Window;
-            dataGridViewCellStyle6.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            dataGridViewCellStyle6.ForeColor = System.Drawing.SystemColors.ControlText;
-            dataGridViewCellStyle6.SelectionBackColor = System.Drawing.SystemColors.Window;
-            dataGridViewCellStyle6.SelectionForeColor = System.Drawing.SystemColors.ControlText;
-            dataGridViewCellStyle6.WrapMode = System.Windows.Forms.DataGridViewTriState.False;
-            this.dgrPvtChcFields.DefaultCellStyle = dataGridViewCellStyle6;
+            dataGridViewCellStyle1.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle1.BackColor = System.Drawing.SystemColors.Window;
+            dataGridViewCellStyle1.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            dataGridViewCellStyle1.ForeColor = System.Drawing.SystemColors.ControlText;
+            dataGridViewCellStyle1.SelectionBackColor = System.Drawing.SystemColors.Window;
+            dataGridViewCellStyle1.SelectionForeColor = System.Drawing.SystemColors.ControlText;
+            dataGridViewCellStyle1.WrapMode = System.Windows.Forms.DataGridViewTriState.False;
+            this.dgrPvtChcFields.DefaultCellStyle = dataGridViewCellStyle1;
             this.dgrPvtChcFields.Location = new System.Drawing.Point(7, 238);
             this.dgrPvtChcFields.MultiSelect = false;
             this.dgrPvtChcFields.Name = "dgrPvtChcFields";
             this.dgrPvtChcFields.ReadOnly = true;
             this.dgrPvtChcFields.RowHeadersVisible = false;
             this.dgrPvtChcFields.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-            this.dgrPvtChcFields.Size = new System.Drawing.Size(336, 184);
+            this.dgrPvtChcFields.Size = new System.Drawing.Size(336, 153);
             this.dgrPvtChcFields.TabIndex = 2;
             // 
             // pvtChcFieldSrcName
@@ -410,29 +412,6 @@
             this.dgrWbConnections.CellEndEdit += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgrWbConnections_CellEndEdit);
             this.dgrWbConnections.CellValidating += new System.Windows.Forms.DataGridViewCellValidatingEventHandler(this.dgrWbConnections_CellValidating);
             this.dgrWbConnections.SelectionChanged += new System.EventHandler(this.dgrWbConnections_SelectionChanged);
-            // 
-            // pgeGroupings
-            // 
-            this.pgeGroupings.Controls.Add(this.dgrGroupings);
-            this.pgeGroupings.Location = new System.Drawing.Point(4, 22);
-            this.pgeGroupings.Name = "pgeGroupings";
-            this.pgeGroupings.Padding = new System.Windows.Forms.Padding(3);
-            this.pgeGroupings.Size = new System.Drawing.Size(833, 428);
-            this.pgeGroupings.TabIndex = 3;
-            this.pgeGroupings.Text = "Groupings";
-            this.pgeGroupings.UseVisualStyleBackColor = true;
-            // 
-            // dgrGroupings
-            // 
-            this.dgrGroupings.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            this.dgrGroupings.Location = new System.Drawing.Point(6, 6);
-            this.dgrGroupings.Name = "dgrGroupings";
-            this.dgrGroupings.Size = new System.Drawing.Size(821, 416);
-            this.dgrGroupings.TabIndex = 0;
-            this.dgrGroupings.CellBeginEdit += new System.Windows.Forms.DataGridViewCellCancelEventHandler(this.dgrGroupings_CellBeginEdit);
-            this.dgrGroupings.CellEndEdit += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgrGroupings_CellEndEdit);
-            this.dgrGroupings.CellValidating += new System.Windows.Forms.DataGridViewCellValidatingEventHandler(this.dgrGroupings_CellValidating);
-            this.dgrGroupings.UserDeletingRow += new System.Windows.Forms.DataGridViewRowCancelEventHandler(this.dgrGroupings_UserDeletingRow);
             // 
             // DataSource
             // 
@@ -505,11 +484,57 @@
             this.dtaSrcCommandType.ReadOnly = true;
             this.dtaSrcCommandType.Width = 150;
             // 
+            // pgeGroupings
+            // 
+            this.pgeGroupings.Controls.Add(this.dgrGroupings);
+            this.pgeGroupings.Location = new System.Drawing.Point(4, 22);
+            this.pgeGroupings.Name = "pgeGroupings";
+            this.pgeGroupings.Padding = new System.Windows.Forms.Padding(3);
+            this.pgeGroupings.Size = new System.Drawing.Size(833, 397);
+            this.pgeGroupings.TabIndex = 3;
+            this.pgeGroupings.Text = "Groupings";
+            this.pgeGroupings.UseVisualStyleBackColor = true;
+            // 
+            // dgrGroupings
+            // 
+            this.dgrGroupings.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            this.dgrGroupings.Location = new System.Drawing.Point(6, 6);
+            this.dgrGroupings.Name = "dgrGroupings";
+            this.dgrGroupings.Size = new System.Drawing.Size(821, 416);
+            this.dgrGroupings.TabIndex = 0;
+            this.dgrGroupings.CellBeginEdit += new System.Windows.Forms.DataGridViewCellCancelEventHandler(this.dgrGroupings_CellBeginEdit);
+            this.dgrGroupings.CellEndEdit += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgrGroupings_CellEndEdit);
+            this.dgrGroupings.CellValidating += new System.Windows.Forms.DataGridViewCellValidatingEventHandler(this.dgrGroupings_CellValidating);
+            this.dgrGroupings.UserDeletingRow += new System.Windows.Forms.DataGridViewRowCancelEventHandler(this.dgrGroupings_UserDeletingRow);
+            // 
+            // cboGroupingFilter
+            // 
+            this.cboGroupingFilter.AutoCompleteMode = System.Windows.Forms.AutoCompleteMode.SuggestAppend;
+            this.cboGroupingFilter.AutoCompleteSource = System.Windows.Forms.AutoCompleteSource.ListItems;
+            this.cboGroupingFilter.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cboGroupingFilter.FormattingEnabled = true;
+            this.cboGroupingFilter.Location = new System.Drawing.Point(94, 12);
+            this.cboGroupingFilter.Name = "cboGroupingFilter";
+            this.cboGroupingFilter.Size = new System.Drawing.Size(167, 21);
+            this.cboGroupingFilter.TabIndex = 1;
+            this.cboGroupingFilter.SelectedIndexChanged += new System.EventHandler(this.cboGroupingFilter_SelectedIndexChanged);
+            // 
+            // label2
+            // 
+            this.label2.AutoSize = true;
+            this.label2.Location = new System.Drawing.Point(13, 15);
+            this.label2.Name = "label2";
+            this.label2.Size = new System.Drawing.Size(75, 13);
+            this.label2.TabIndex = 2;
+            this.label2.Text = "Grouping filter:";
+            // 
             // PvtLstObjNavigator
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(865, 478);
+            this.Controls.Add(this.label2);
+            this.Controls.Add(this.cboGroupingFilter);
             this.Controls.Add(this.tcrNavigator);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
             this.MaximizeBox = false;
@@ -529,6 +554,7 @@
             this.pgeGroupings.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.dgrGroupings)).EndInit();
             this.ResumeLayout(false);
+            this.PerformLayout();
 
         }
 
@@ -578,5 +604,7 @@
         private System.Windows.Forms.DataGridViewTextBoxColumn dtaSrcCommandText;
         private System.Windows.Forms.DataGridViewTextBoxColumn dtaSrcConnectionFile;
         private System.Windows.Forms.DataGridViewTextBoxColumn dtaSrcCommandType;
+        private System.Windows.Forms.ComboBox cboGroupingFilter;
+        private System.Windows.Forms.Label label2;
     }
 }

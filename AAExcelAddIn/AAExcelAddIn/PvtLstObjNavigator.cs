@@ -51,6 +51,7 @@ namespace AAExcelAddIn
             Excel.XlCmdType cmdType = Microsoft.Office.Interop.Excel.XlCmdType.xlCmdDefault;
             bool connPivotCache, connReadOnly, correctXmlPart = false;
             Nullable<decimal> connPvtChcSize = null;
+            DataTable dtPivots = new DataTable(), dtLstObj = new DataTable(), dtWbConn = new DataTable();
 
             //Creating the activeworkbook object
             app = (Excel.Application)Marshal.GetActiveObject("Excel.Application");
@@ -120,11 +121,13 @@ namespace AAExcelAddIn
             }
 
             //Loading all the current groupings into the grouping dropdowns
+            cboGroupingFilter.Items.Add("");
             ((DataGridViewComboBoxColumn)dgrPivotTables.Columns["pvtGrouping"]).Items.Add("");
             ((DataGridViewComboBoxColumn)dgrListObjects.Columns["lstObjGrouping"]).Items.Add("");
             ((DataGridViewComboBoxColumn)dgrWbConnections.Columns["dtaSrcGrouping"]).Items.Add("");
             foreach (Office.CustomXMLNode node in addInXmlPart.SelectSingleNode("data/Groupings").ChildNodes)
             {
+                cboGroupingFilter.Items.Add(node.Text);
                 ((DataGridViewComboBoxColumn)dgrPivotTables.Columns["pvtGrouping"]).Items.Add(node.Text);
                 ((DataGridViewComboBoxColumn)dgrListObjects.Columns["lstObjGrouping"]).Items.Add(node.Text);
                 ((DataGridViewComboBoxColumn)dgrWbConnections.Columns["dtaSrcGrouping"]).Items.Add(node.Text);
@@ -132,13 +135,39 @@ namespace AAExcelAddIn
 
             //>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
+            //Creating DataTables for grid view's data sources
+            //************************************************************************************************
+
+            //PivotTables gird view
+            foreach (DataGridViewColumn col in dgrPivotTables.Columns)
+            {
+                dtPivots.Columns.Add(col.Name);
+                col.DataPropertyName = col.Name;
+            }
+
+            //List Objects gird view
+            foreach (DataGridViewColumn col in dgrListObjects.Columns)
+            {
+                dtLstObj.Columns.Add(col.Name);
+                col.DataPropertyName = col.Name;
+            }
+
+            //Workbook Connections gird view
+            foreach (DataGridViewColumn col in dgrWbConnections.Columns)
+            {
+                dtWbConn.Columns.Add(col.Name);
+                col.DataPropertyName = col.Name;
+            }
+            //************************************************************************************************
+
+
             //Loading the data grids in the form
             foreach (Excel.Worksheet ws in thisWorkbook.Worksheets)
             {
 
                 //Don't load objects if they reside on a very hidden worksheet
                 if (ws.Visible != Excel.XlSheetVisibility.xlSheetVeryHidden)
-                { 
+                {
 
                     //Loading the PivotTables tab data grid
                     foreach (Excel.PivotTable pvt in ws.PivotTables())
@@ -218,9 +247,7 @@ namespace AAExcelAddIn
                         //...................................................................................
 
                         //Creating a new row in the data grid for each pivot
-                        DataGridViewRow row = new DataGridViewRow();
-                        row.CreateCells(dgrPivotTables, pvt.Name, ws.Name, "Go To", objectGrouping, dataSoruceName, dataSrouceType, dataSoruceDesc, pvt.RefreshDate, pageFields, rowFields, columnFields, dataFields);
-                        dgrPivotTables.Rows.Add(row);
+                        dtPivots.Rows.Add(new object[] { pvt.Name, ws.Name, "Go To", objectGrouping, dataSoruceName, dataSrouceType, dataSoruceDesc, pvt.RefreshDate, pageFields, rowFields, columnFields, dataFields });
                     }
 
                     //Loading the List Objects tab data grid
@@ -275,9 +302,7 @@ namespace AAExcelAddIn
                         //...................................................................................
 
                         //Creating a new row in the data grid for each list object
-                        DataGridViewRow row = new DataGridViewRow();
-                        row.CreateCells(dgrListObjects, lst.Name, ws.Name, "Go To", objectGrouping, dataSoruceName, dataSrouceType, dataSoruceDesc, lstObjColumns);
-                        dgrListObjects.Rows.Add(row);
+                        dtLstObj.Rows.Add(new object[] { lst.Name, ws.Name, "Go To", objectGrouping, dataSoruceName, dataSrouceType, dataSoruceDesc, lstObjColumns });
                     }
                 }
             }
@@ -488,10 +513,13 @@ namespace AAExcelAddIn
                 //...................................................................................
 
                 //Creating a new row in the data grid for each list object
-                DataGridViewRow row = new DataGridViewRow();
-                row.CreateCells(dgrWbConnections, conn.Name, conn.Description, connType, objectGrouping, connPivotCache, connPvtChcSize, connLastRefreshed, connReadOnly, connCommandText, connFilePath, connCommandType);
-                dgrWbConnections.Rows.Add(row);
+                dtWbConn.Rows.Add(new object[] { conn.Name, conn.Description, connType, objectGrouping, connPivotCache, connPvtChcSize, connLastRefreshed, connReadOnly, connCommandText, connFilePath, connCommandType });
             }
+
+            //Loading the data tables in the gird views
+            dgrPivotTables.DataSource = dtPivots;
+            dgrListObjects.DataSource = dtLstObj;
+            dgrWbConnections.DataSource = dtWbConn;
 
             //Right aligning certain columns in the data source grid view
             dgrWbConnections.Columns["dtaSrcPvtChcMemory"].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
@@ -500,6 +528,7 @@ namespace AAExcelAddIn
             dgrPivotTables.ClearSelection();
             dgrListObjects.ClearSelection();
             dgrWbConnections.ClearSelection();
+
         }
 
         //User selects a data source record that is a pivot cache to see its fields
@@ -625,6 +654,7 @@ namespace AAExcelAddIn
                 if (creatingNewGrouping)
                 {
                     addInXmlPart.AddNode(addInXmlPart.SelectSingleNode("data/Groupings"), "Grouping", NodeValue: dgrGroupings[e.ColumnIndex, e.RowIndex].Value.ToString());
+                    cboGroupingFilter.Items.Add(dgrGroupings[e.ColumnIndex, e.RowIndex].Value.ToString());
                     ((DataGridViewComboBoxColumn)dgrPivotTables.Columns["pvtGrouping"]).Items.Add(dgrGroupings[e.ColumnIndex, e.RowIndex].Value.ToString());
                     ((DataGridViewComboBoxColumn)dgrListObjects.Columns["lstObjGrouping"]).Items.Add(dgrGroupings[e.ColumnIndex, e.RowIndex].Value.ToString());
                     ((DataGridViewComboBoxColumn)dgrWbConnections.Columns["dtaSrcGrouping"]).Items.Add(dgrGroupings[e.ColumnIndex, e.RowIndex].Value.ToString());
@@ -634,6 +664,17 @@ namespace AAExcelAddIn
 
                     //Updating the grouping in the xml part
                     addInXmlPart.SelectSingleNode("data/Groupings/Grouping[text()=\"" + previousGrouping + "\"]").Text = dgrGroupings[e.ColumnIndex, e.RowIndex].Value.ToString();
+
+                    //Updating the grouping in the combobox filter
+                    for (int i = 0; i < cboGroupingFilter.Items.Count; i++)
+                    {
+                        if (cboGroupingFilter.GetItemText(cboGroupingFilter.Items[i]) == previousGrouping)
+                        {
+                            cboGroupingFilter.Items.Remove(cboGroupingFilter.Items[i]);
+                            break;
+                        }
+                    }
+                    cboGroupingFilter.Items.Add(dgrGroupings[0, e.RowIndex].Value.ToString());
 
                     //Updating the grouping assigned to the records in the data grid views
                     //--------------------------------------------------------------------------------------------------
@@ -709,6 +750,16 @@ namespace AAExcelAddIn
 
                     //Removing grouping from custom xml part
                     addInXmlPart.SelectSingleNode("data/Groupings/Grouping[text()=\"" + e.Row.Cells[0].Value.ToString() + "\"]").Delete();
+
+                    //Removing the grouping in the combobox filter
+                    for (int i = 0; i < cboGroupingFilter.Items.Count; i++)
+                    {
+                        if (cboGroupingFilter.GetItemText(cboGroupingFilter.Items[i]) == e.Row.Cells[0].Value.ToString())
+                        {
+                            cboGroupingFilter.Items.Remove(cboGroupingFilter.Items[i]);
+                            break;
+                        }
+                    }
 
                     //Removing grouping from comboboxes in data grid views
                     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -1403,6 +1454,29 @@ namespace AAExcelAddIn
                     }
                     break;
             }
+        }
+
+        //User changes the grouping the want to filter on
+        private void cboGroupingFilter_SelectedIndexChanged(object sender, EventArgs e)
+        {
+
+            //If the suer chooses the blank option, clear the filters
+            if (String.IsNullOrEmpty(cboGroupingFilter.Text))
+            {
+                (dgrPivotTables.DataSource as DataTable).DefaultView.RowFilter = "";
+                (dgrListObjects.DataSource as DataTable).DefaultView.RowFilter = "";
+                (dgrWbConnections.DataSource as DataTable).DefaultView.RowFilter = "";
+            }
+            else
+            {
+                (dgrPivotTables.DataSource as DataTable).DefaultView.RowFilter = "pvtGrouping = '" + cboGroupingFilter.Text + "'";
+                (dgrListObjects.DataSource as DataTable).DefaultView.RowFilter = "lstObjGrouping = '" + cboGroupingFilter.Text + "'";
+                (dgrWbConnections.DataSource as DataTable).DefaultView.RowFilter = "dtaSrcGrouping = '" + cboGroupingFilter.Text + "'";
+            }
+
+            //Reset variable so the data source fields data grid will update
+            previousDataSrcRowIndex = -1;
+
         }
     }
 }
