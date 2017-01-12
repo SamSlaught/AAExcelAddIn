@@ -247,7 +247,7 @@ namespace AAExcelAddIn
                         //...................................................................................
 
                         //Creating a new row in the data grid for each pivot
-                        dtPivots.Rows.Add(new object[] { pvt.Name, ws.Name, "Go To", objectGrouping, dataSoruceName, dataSrouceType, dataSoruceDesc, pvt.RefreshDate, pageFields, rowFields, columnFields, dataFields });
+                        dtPivots.Rows.Add(new object[] { pvt.Name, ws.Name, "Go To", objectGrouping, false, dataSoruceName, dataSrouceType, dataSoruceDesc, pvt.RefreshDate, pageFields, rowFields, columnFields, dataFields });
                     }
 
                     //Loading the List Objects tab data grid
@@ -676,6 +676,15 @@ namespace AAExcelAddIn
                     }
                     cboGroupingFilter.Items.Add(dgrGroupings[0, e.RowIndex].Value.ToString());
 
+                    //Clearing the filters from all the grids
+                    if (!String.IsNullOrEmpty(cboGroupingFilter.Text))
+                    {
+                        cboGroupingFilter.Text = "";
+                    }
+                    (dgrPivotTables.DataSource as DataTable).DefaultView.RowFilter = "";
+                    (dgrListObjects.DataSource as DataTable).DefaultView.RowFilter = "";
+                    (dgrWbConnections.DataSource as DataTable).DefaultView.RowFilter = "";
+
                     //Updating the grouping assigned to the records in the data grid views
                     //--------------------------------------------------------------------------------------------------
 
@@ -760,6 +769,15 @@ namespace AAExcelAddIn
                             break;
                         }
                     }
+
+                    //Clearing the filters from all the grids
+                    if (!String.IsNullOrEmpty(cboGroupingFilter.Text))
+                    {
+                        cboGroupingFilter.Text = "";
+                    }
+                    (dgrPivotTables.DataSource as DataTable).DefaultView.RowFilter = "";
+                    (dgrListObjects.DataSource as DataTable).DefaultView.RowFilter = "";
+                    (dgrWbConnections.DataSource as DataTable).DefaultView.RowFilter = "";
 
                     //Removing grouping from comboboxes in data grid views
                     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
