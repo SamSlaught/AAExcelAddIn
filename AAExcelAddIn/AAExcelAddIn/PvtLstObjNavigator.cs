@@ -1496,5 +1496,58 @@ namespace AAExcelAddIn
             previousDataSrcRowIndex = -1;
 
         }
+
+        //User clicks to print the worksheet of any pivot thay has been checked to print in the pivots gird view
+        private void btnPivotsQuickPrint_Click(object sender, EventArgs e)
+        {
+
+            //Variables
+            DialogResult msgBoxResult;
+            Excel.Application app;
+            Excel.Workbook thisWorkbook;
+            Excel.Worksheet ws;
+            List<string> printedWs = new List<string>();
+            bool printWs;
+
+            //Confirming with the user they wish to print all selected pivots
+            msgBoxResult = MessageBox.Show("Are you sure you want to print all the selected Pivots?", this.Text, MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+            if (msgBoxResult == DialogResult.Yes)
+            {
+
+                //Creating the activeworkbook object
+                app = (Excel.Application)Marshal.GetActiveObject("Excel.Application");
+                app.Visible = true;
+                thisWorkbook = (Excel.Workbook)app.ActiveWorkbook;
+
+                //Looping through each pivot record in the pivots grid view and print it if it was selected to
+                foreach (DataGridViewRow row in dgrPivotTables.Rows)
+                {
+                    ws = thisWorkbook.Worksheets[row.Cells["PvtWorksheet"].Value.ToString()];
+                    printWs = (row.Cells["PvtPrint"].Value.ToString() == "") ? false : Convert.ToBoolean(row.Cells["PvtPrint"].Value);
+                    if (printWs && !printedWs.Contains(ws.Name))
+                    {
+                        try
+                        {
+                            ws.PrintOutEx();
+                        }
+                        catch
+                        {
+                            MessageBox.Show("The " + ws.Name + " worksheet was unable to be printed.", this.Text, MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                        }
+                        printedWs.Add(ws.Name);
+                    }
+                }
+
+                //Notifying the user once everything has been printed
+                if (printedWs.Count > 0)
+                {
+                    MessageBox.Show("All successful PivotTable prints have been sent to the printer.", this.Text, MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+                else
+                {
+                    MessageBox.Show("Nothing was printed.", this.Text, MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+            }
+        }
     }
 }

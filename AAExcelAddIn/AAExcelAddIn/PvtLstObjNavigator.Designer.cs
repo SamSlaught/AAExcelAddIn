@@ -28,7 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle4 = new System.Windows.Forms.DataGridViewCellStyle();
             this.tcrNavigator = new System.Windows.Forms.TabControl();
             this.pgePivotTables = new System.Windows.Forms.TabPage();
             this.dgrPivotTables = new System.Windows.Forms.DataGridView();
@@ -68,7 +68,7 @@
             this.PvtWorksheet = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.PvtGoTo = new System.Windows.Forms.DataGridViewButtonColumn();
             this.PvtGrouping = new System.Windows.Forms.DataGridViewComboBoxColumn();
-            this.pvtPrint = new System.Windows.Forms.DataGridViewCheckBoxColumn();
+            this.PvtPrint = new System.Windows.Forms.DataGridViewCheckBoxColumn();
             this.PvtDataSourceName = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.PvtDataSourceType = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.PvtDataSourceDesc = new System.Windows.Forms.DataGridViewTextBoxColumn();
@@ -124,7 +124,7 @@
             this.PvtWorksheet,
             this.PvtGoTo,
             this.PvtGrouping,
-            this.pvtPrint,
+            this.PvtPrint,
             this.PvtDataSourceName,
             this.PvtDataSourceType,
             this.PvtDataSourceDesc,
@@ -263,14 +263,14 @@
             this.dgrPvtChcFields.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
             this.pvtChcFieldSrcName,
             this.pvtChcFieldDataType});
-            dataGridViewCellStyle1.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
-            dataGridViewCellStyle1.BackColor = System.Drawing.SystemColors.Window;
-            dataGridViewCellStyle1.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            dataGridViewCellStyle1.ForeColor = System.Drawing.SystemColors.ControlText;
-            dataGridViewCellStyle1.SelectionBackColor = System.Drawing.SystemColors.Window;
-            dataGridViewCellStyle1.SelectionForeColor = System.Drawing.SystemColors.ControlText;
-            dataGridViewCellStyle1.WrapMode = System.Windows.Forms.DataGridViewTriState.False;
-            this.dgrPvtChcFields.DefaultCellStyle = dataGridViewCellStyle1;
+            dataGridViewCellStyle4.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle4.BackColor = System.Drawing.SystemColors.Window;
+            dataGridViewCellStyle4.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            dataGridViewCellStyle4.ForeColor = System.Drawing.SystemColors.ControlText;
+            dataGridViewCellStyle4.SelectionBackColor = System.Drawing.SystemColors.Window;
+            dataGridViewCellStyle4.SelectionForeColor = System.Drawing.SystemColors.ControlText;
+            dataGridViewCellStyle4.WrapMode = System.Windows.Forms.DataGridViewTriState.False;
+            this.dgrPvtChcFields.DefaultCellStyle = dataGridViewCellStyle4;
             this.dgrPvtChcFields.Location = new System.Drawing.Point(7, 238);
             this.dgrPvtChcFields.MultiSelect = false;
             this.dgrPvtChcFields.Name = "dgrPvtChcFields";
@@ -455,6 +455,7 @@
             this.btnPivotsQuickPrint.TabIndex = 2;
             this.btnPivotsQuickPrint.Text = "Print";
             this.btnPivotsQuickPrint.UseVisualStyleBackColor = true;
+            this.btnPivotsQuickPrint.Click += new System.EventHandler(this.btnPivotsQuickPrint_Click);
             // 
             // PivotTable
             // 
@@ -485,10 +486,11 @@
             this.PvtGrouping.Resizable = System.Windows.Forms.DataGridViewTriState.True;
             this.PvtGrouping.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.Automatic;
             // 
-            // pvtPrint
+            // PvtPrint
             // 
-            this.pvtPrint.HeaderText = "Print";
-            this.pvtPrint.Name = "pvtPrint";
+            this.PvtPrint.HeaderText = "Print";
+            this.PvtPrint.Name = "PvtPrint";
+            this.PvtPrint.Width = 50;
             // 
             // PvtDataSourceName
             // 
@@ -617,7 +619,7 @@
         private System.Windows.Forms.DataGridViewTextBoxColumn PvtWorksheet;
         private System.Windows.Forms.DataGridViewButtonColumn PvtGoTo;
         private System.Windows.Forms.DataGridViewComboBoxColumn PvtGrouping;
-        private System.Windows.Forms.DataGridViewCheckBoxColumn pvtPrint;
+        private System.Windows.Forms.DataGridViewCheckBoxColumn PvtPrint;
         private System.Windows.Forms.DataGridViewTextBoxColumn PvtDataSourceName;
         private System.Windows.Forms.DataGridViewTextBoxColumn PvtDataSourceType;
         private System.Windows.Forms.DataGridViewTextBoxColumn PvtDataSourceDesc;
